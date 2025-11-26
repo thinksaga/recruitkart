@@ -14,8 +14,7 @@ export async function GET() {
 
         const payload = await verifyJWT(token);
 
-        // Check if user is ADMIN, SUPPORT, or OPERATOR
-        if (!['ADMIN', 'SUPPORT', 'OPERATOR'].includes(payload.role)) {
+        if (!payload || typeof payload.role !== 'string' || !['ADMIN', 'SUPPORT', 'OPERATOR'].includes(payload.role)) {
             return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
         }
 
@@ -56,6 +55,45 @@ export async function GET() {
             },
         });
 
+        // Get chart data (Last 7 days)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+        sevenDaysAgo.setHours(0, 0, 0, 0);
+
+        const [usersLast7Days, jobsLast7Days] = await Promise.all([
+            prisma.user.findMany({
+                where: { created_at: { gte: sevenDaysAgo } },
+                select: { created_at: true },
+            }),
+            prisma.job.findMany({
+                where: { created_at: { gte: sevenDaysAgo } },
+                select: { created_at: true },
+            }),
+        ]);
+
+        const chartData = [];
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(sevenDaysAgo);
+            date.setDate(date.getDate() + i);
+            const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+
+            const usersCount = usersLast7Days.filter((u: { created_at: Date }) => {
+                const d = new Date(u.created_at);
+                return d.getDate() === date.getDate() && d.getMonth() === date.getMonth();
+            }).length;
+
+            const jobsCount = jobsLast7Days.filter((j: { created_at: Date }) => {
+                const d = new Date(j.created_at);
+                return d.getDate() === date.getDate() && d.getMonth() === date.getMonth();
+            }).length;
+
+            chartData.push({
+                name: dayName,
+                users: usersCount,
+                jobs: jobsCount,
+            });
+        }
+
         return NextResponse.json({
             stats: {
                 totalUsers,
@@ -67,6 +105,7 @@ export async function GET() {
                 openJobs,
             },
             recentUsers,
+            chartData,
         });
     } catch (error) {
         console.error('Admin stats error:', error);
