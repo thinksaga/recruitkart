@@ -10,15 +10,22 @@ const signupSchema = z.object({
     email: z.string().email(),
     password: z.string().min(8),
     role: z.enum([UserRole.COMPANY_ADMIN, UserRole.TAS]),
-    // Optional fields for profile creation
-    companyName: z.string().optional(),
+    // TAS specific fields
+    fullName: z.string().optional(),
     panNumber: z.string().optional(),
+    phone: z.string().optional(),
+    linkedinUrl: z.string().optional(),
+    // Company specific fields
+    companyName: z.string().optional(),
+    gstin: z.string().optional(),
+    domain: z.string().optional(),
+    website: z.string().optional(),
 });
 
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { email, password, role, companyName, panNumber } = signupSchema.parse(body);
+        const { email, password, role, companyName, panNumber, fullName, phone, linkedinUrl, gstin, domain, website } = signupSchema.parse(body);
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -29,30 +36,36 @@ export async function POST(req: Request) {
                     email,
                     password_hash: hashedPassword,
                     role,
+                    phone: phone || null,
                     verification_status: 'PENDING', // Default status
                 },
             });
 
             if (role === UserRole.COMPANY_ADMIN) {
                 if (!companyName) throw new Error('Company Name is required for Company Admin');
-                await tx.organization.create({
+                const org = await tx.organization.create({
                     data: {
-                        name: companyName,
-                        users: { connect: { id: user.id } }, // Connect user to organization
+                        legal_name: companyName,
+                        display_name: companyName,
+                        gstin: gstin || null,
+                        domain: domain || null,
+                        website: website || null,
                     },
                 });
-                // Update user with organization_id is handled by the relation, but explicit update might be needed if not using nested connect in Organization create
-                // Actually, Organization.users is a one-to-many. User has organization_id.
-                // Let's do it the other way: Create Organization first? No, User first is fine, then update User or create Organization with user connection.
-                // Better: Create Organization and connect User.
-                // Wait, User has organization_id. Organization has users[].
-                // So creating Organization with `users: { connect: { id: user.id } }` works.
+                // Update user with organization_id
+                await tx.user.update({
+                    where: { id: user.id },
+                    data: { organization_id: org.id },
+                });
             } else if (role === UserRole.TAS) {
                 if (!panNumber) throw new Error('PAN Number is required for TAS');
+                if (!fullName) throw new Error('Full Name is required for TAS');
                 await tx.tASProfile.create({
                     data: {
                         user_id: user.id,
                         pan_number: panNumber,
+                        full_name: fullName,
+                        linkedin_url: linkedinUrl || null,
                     },
                 });
             }

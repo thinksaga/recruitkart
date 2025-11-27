@@ -44,7 +44,7 @@ interface RecentUser {
     role: string;
     verification_status: string;
     created_at: string;
-    organization?: { name: string } | null;
+    organization?: { display_name: string } | null;
 }
 
 interface ChartDataPoint {

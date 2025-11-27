@@ -14,7 +14,9 @@ export async function GET(request: NextRequest) {
 
         const payload = await verifyJWT(token);
 
-        if (!['ADMIN', 'SUPPORT', 'OPERATOR'].includes(payload.role)) {
+        // Check for internal staff roles
+        const internalRoles = ['SUPER_ADMIN', 'COMPLIANCE_OFFICER', 'SUPPORT_AGENT', 'OPERATOR', 'FINANCE_CONTROLLER'];
+        if (!payload || typeof payload.role !== 'string' || !internalRoles.includes(payload.role)) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
@@ -32,13 +34,17 @@ export async function GET(request: NextRequest) {
             select: {
                 id: true,
                 email: true,
+                phone: true,
                 role: true,
                 verification_status: true,
                 created_at: true,
+                last_login_at: true,
+                failed_login_attempts: true,
                 organization: {
                     select: {
                         id: true,
-                        name: true,
+                        legal_name: true,
+                        display_name: true,
                         gstin: true,
                         domain: true,
                         website: true,
@@ -46,6 +52,7 @@ export async function GET(request: NextRequest) {
                 },
                 tas_profile: {
                     select: {
+                        full_name: true,
                         pan_number: true,
                         linkedin_url: true,
                         credits_balance: true,

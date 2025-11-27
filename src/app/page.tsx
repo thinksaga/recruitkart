@@ -19,7 +19,7 @@ import Link from 'next/link';
 const Navbar = () => (
   <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 backdrop-blur-md bg-slate-950/50 border-b border-white/10">
     <Link href="/" className="flex items-center gap-2">
-      <Image src="/Gemini_Generated_Image_8u0c458u0c458u0c.png" alt="Recruitkart Logo" width={40} height={40} className="rounded-full" />
+      <Image src="/logo.png" alt="Recruitkart Logo" width={40} height={40} className="rounded-full" />
       <span className="text-xl font-bold text-white tracking-tight">Recruitkart</span>
     </Link>
     <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
@@ -382,7 +382,7 @@ const Footer = () => (
   <footer className="bg-slate-950 py-12 border-t border-white/10">
     <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
       <div className="flex items-center gap-2">
-        <Image src="/Gemini_Generated_Image_8u0c458u0c458u0c.png" alt="Logo" width={32} height={32} className="rounded-full grayscale opacity-50" />
+        <Image src="/logo.png" alt="Logo" width={32} height={32} className="rounded-full grayscale opacity-50" />
         <span className="text-slate-500 font-bold">Recruitkart Protocol</span>
       </div>
       <p className="text-slate-600 text-sm">© 2025 Recruitkart. All rights reserved.</p>

@@ -17,14 +17,16 @@ export async function PATCH(
 
         const payload = await verifyJWT(token);
 
-        if (!['ADMIN', 'SUPPORT'].includes(payload.role)) {
+        // Check for internal staff roles
+        const internalRoles = ['SUPER_ADMIN', 'COMPLIANCE_OFFICER', 'SUPPORT_AGENT'];
+        if (!payload || typeof payload.role !== 'string' || !internalRoles.includes(payload.role)) {
             return NextResponse.json({ error: 'Forbidden - Admin or Support access required' }, { status: 403 });
         }
 
         const { id } = params;
         const { verification_status } = await request.json();
 
-        if (!['PENDING', 'VERIFIED', 'REJECTED'].includes(verification_status)) {
+        if (!['PENDING', 'UNDER_REVIEW', 'VERIFIED', 'REJECTED', 'SUSPENDED', 'BANNED'].includes(verification_status)) {
             return NextResponse.json({ error: 'Invalid verification status' }, { status: 400 });
         }
 

@@ -14,7 +14,9 @@ export async function GET() {
 
         const payload = await verifyJWT(token);
 
-        if (!['ADMIN', 'SUPPORT', 'OPERATOR'].includes(payload.role)) {
+        // Check for internal staff roles
+        const internalRoles = ['SUPER_ADMIN', 'COMPLIANCE_OFFICER', 'SUPPORT_AGENT', 'OPERATOR', 'FINANCE_CONTROLLER'];
+        if (!payload || typeof payload.role !== 'string' || !internalRoles.includes(payload.role)) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
@@ -23,7 +25,8 @@ export async function GET() {
             include: {
                 organization: {
                     select: {
-                        name: true,
+                        display_name: true,
+                        legal_name: true,
                     },
                 },
             },

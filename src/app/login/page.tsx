@@ -48,14 +48,18 @@ export default function LoginPage() {
             const responseData = await res.json();
             const userRole = responseData.user?.role;
 
-            // Redirect based on role
-            if (['ADMIN', 'SUPPORT', 'OPERATOR'].includes(userRole)) {
+            // --- SCHEMA V7 UPDATE: Redirect based on new Role Enums ---
+            const internalRoles = ['SUPER_ADMIN', 'SUPPORT_AGENT', 'COMPLIANCE_OFFICER', 'FINANCE_CONTROLLER'];
+            const companyRoles = ['COMPANY_ADMIN', 'COMPANY_MEMBER', 'INTERVIEWER', 'DECISION_MAKER'];
+
+            if (internalRoles.includes(userRole)) {
                 router.push('/admin');
-            } else if (userRole === 'COMPANY_ADMIN') {
+            } else if (companyRoles.includes(userRole)) {
                 router.push('/dashboard/company');
             } else if (userRole === 'TAS') {
                 router.push('/dashboard/tas');
             } else {
+                // Fallback for CANDIDATE or others
                 router.push('/dashboard');
             }
         } catch (err: any) {

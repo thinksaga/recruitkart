@@ -24,9 +24,6 @@ const companySchema = z.object({
     gstin: z.string().regex(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/, 'Invalid GSTIN format').optional().or(z.literal('')),
     website: z.string().url('Invalid website URL').optional().or(z.literal('')),
     domain: z.string().min(1, 'Company domain is required (e.g., acme.com)'),
-    contactPerson: z.string().min(1, 'Contact person name is required'),
-    designation: z.string().min(1, 'Designation is required'),
-    panNumber: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
     path: ["confirmPassword"],
@@ -233,31 +230,7 @@ export default function SignupPage() {
                                 )}
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-200">Contact Person *</label>
-                                    <input
-                                        {...register('contactPerson')}
-                                        className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                                        placeholder="John Doe"
-                                    />
-                                    {'contactPerson' in errors && errors.contactPerson && (
-                                        <p className="text-xs text-red-400">{errors.contactPerson.message}</p>
-                                    )}
-                                </div>
 
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-200">Designation *</label>
-                                    <input
-                                        {...register('designation')}
-                                        className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                                        placeholder="HR Manager"
-                                    />
-                                    {'designation' in errors && errors.designation && (
-                                        <p className="text-xs text-red-400">{errors.designation.message}</p>
-                                    )}
-                                </div>
-                            </div>
                         </>
                     )}
 
@@ -284,7 +257,7 @@ export default function SignupPage() {
                                         placeholder="ABCDE1234F"
                                         maxLength={10}
                                     />
-                                    {errors.panNumber && (
+                                    {'panNumber' in errors && errors.panNumber && (
                                         <p className="text-xs text-red-400">{errors.panNumber.message}</p>
                                     )}
                                 </div>

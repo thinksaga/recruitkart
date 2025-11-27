@@ -14,7 +14,9 @@ export async function GET() {
 
         const payload = await verifyJWT(token);
 
-        if (!payload || typeof payload.role !== 'string' || !['ADMIN', 'SUPPORT', 'OPERATOR'].includes(payload.role)) {
+        // Check for internal staff roles
+        const internalRoles = ['SUPER_ADMIN', 'COMPLIANCE_OFFICER', 'SUPPORT_AGENT', 'OPERATOR', 'FINANCE_CONTROLLER'];
+        if (!payload || typeof payload.role !== 'string' || !internalRoles.includes(payload.role)) {
             return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
         }
 
@@ -49,7 +51,7 @@ export async function GET() {
                 created_at: true,
                 organization: {
                     select: {
-                        name: true,
+                        display_name: true,
                     },
                 },
             },
