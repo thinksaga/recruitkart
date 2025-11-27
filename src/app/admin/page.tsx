@@ -20,7 +20,8 @@ import {
     MessageSquare,
     HeadphonesIcon,
     Timer,
-    UserCheck
+    UserCheck,
+    DollarSign
 } from 'lucide-react';
 import {
     AreaChart,
@@ -40,6 +41,14 @@ interface Stats {
     totalTAS: number;
     totalJobs: number;
     openJobs: number;
+}
+
+interface CompanyStats {
+    activeJobs: number;
+    totalTeamMembers: number;
+    pendingSubmissions: number;
+    totalSubmissions: number;
+    recentPayments: number;
 }
 
 interface SupportStats {
@@ -69,6 +78,14 @@ interface RecentTicket {
     raised_by: { email: string };
 }
 
+interface RecentSubmission {
+    id: string;
+    status: string;
+    created_at: string;
+    candidate: { full_name: string; email: string };
+    job: { title: string };
+}
+
 interface ChartDataPoint {
     name: string;
     users: number;
@@ -84,8 +101,10 @@ interface CurrentUser {
 export default function AdminDashboard() {
     const router = useRouter();
     const [stats, setStats] = useState<Stats | null>(null);
+    const [companyStats, setCompanyStats] = useState<CompanyStats | null>(null);
     const [supportStats, setSupportStats] = useState<SupportStats | null>(null);
     const [recentUsers, setRecentUsers] = useState<RecentUser[]>([]);
+    const [recentSubmissions, setRecentSubmissions] = useState<RecentSubmission[]>([]);
     const [recentTickets, setRecentTickets] = useState<RecentTicket[]>([]);
     const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
     const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
@@ -123,9 +142,15 @@ export default function AdminDashboard() {
                 throw new Error('Failed to fetch stats');
             }
             const data = await res.json();
-            setStats(data.stats);
-            setRecentUsers(data.recentUsers);
-            setChartData(data.chartData);
+            
+            if (currentUser?.role === 'COMPANY_ADMIN') {
+                setCompanyStats(data.stats);
+                setRecentSubmissions(data.recentSubmissions || []);
+            } else {
+                setStats(data.stats);
+                setRecentUsers(data.recentUsers);
+                setChartData(data.chartData);
+            }
 
             // Fetch support stats if user is SUPPORT_AGENT
             if (currentUser?.role === 'SUPPORT_AGENT') {
@@ -241,6 +266,39 @@ export default function AdminDashboard() {
             bg: 'bg-purple-500/10',
             border: 'border-purple-500/20'
         },
+    ] : currentUser?.role === 'COMPANY_ADMIN' && companyStats ? [
+        {
+            label: 'Active Jobs',
+            value: companyStats.activeJobs,
+            icon: Briefcase,
+            color: 'text-blue-500',
+            bg: 'bg-blue-500/10',
+            border: 'border-blue-500/20'
+        },
+        {
+            label: 'Team Members',
+            value: companyStats.totalTeamMembers,
+            icon: Users,
+            color: 'text-emerald-500',
+            bg: 'bg-emerald-500/10',
+            border: 'border-emerald-500/20'
+        },
+        {
+            label: 'Pending Submissions',
+            value: companyStats.pendingSubmissions,
+            icon: Clock,
+            color: 'text-yellow-500',
+            bg: 'bg-yellow-500/10',
+            border: 'border-yellow-500/20'
+        },
+        {
+            label: 'Total Submissions',
+            value: companyStats.totalSubmissions,
+            icon: Activity,
+            color: 'text-purple-500',
+            bg: 'bg-purple-500/10',
+            border: 'border-purple-500/20'
+        },
     ] : stats ? [
         {
             label: 'Total Users',
@@ -281,6 +339,11 @@ export default function AdminDashboard() {
         { title: 'User Lookup', description: 'Find and help users', icon: UserCheck, color: 'blue', route: '/admin/users' },
         { title: 'Support Analytics', description: 'View support metrics', icon: TrendingUp, color: 'emerald', route: '/admin/analytics' },
         { title: 'Knowledge Base', description: 'Common solutions', icon: HeadphonesIcon, color: 'purple', route: '/admin/settings' },
+    ] : currentUser?.role === 'COMPANY_ADMIN' ? [
+        { title: 'Post New Job', description: 'Create a job posting', icon: Briefcase, color: 'blue', route: '/admin/jobs' },
+        { title: 'Manage Team', description: 'Invite team members', icon: Users, color: 'emerald', route: '/admin/team' },
+        { title: 'Review Submissions', description: 'View candidate applications', icon: Activity, color: 'yellow', route: '/admin/submissions' },
+        { title: 'Payment History', description: 'View invoices and payments', icon: DollarSign, color: 'purple', route: '/admin/payments' },
     ] : [
         { title: 'Verify Users', description: 'Review pending accounts', icon: CheckCircle, color: 'emerald', route: '/admin/users?filter=pending' },
         { title: 'Manage Jobs', description: 'Review job postings', icon: Briefcase, color: 'blue', route: '/admin/jobs' },
@@ -309,11 +372,18 @@ export default function AdminDashboard() {
                         animate={{ opacity: 1, x: 0 }}
                     >
                         <h1 className="text-3xl font-bold text-white mb-1">
-                            {currentUser?.role === 'SUPPORT_AGENT' ? 'Support Dashboard' : 'Dashboard Overview'}
+                            {currentUser?.role === 'SUPPORT_AGENT' 
+                                ? 'Support Dashboard' 
+                                : currentUser?.role === 'COMPANY_ADMIN'
+                                ? 'Company Dashboard'
+                                : 'Dashboard Overview'
+                            }
                         </h1>
                         <p className="text-slate-400">
                             {currentUser?.role === 'SUPPORT_AGENT'
                                 ? 'Manage support tickets and help users'
+                                : currentUser?.role === 'COMPANY_ADMIN'
+                                ? 'Manage your jobs, team, and hiring process'
                                 : new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
                             }
                         </p>
@@ -448,6 +518,57 @@ export default function AdminDashboard() {
                                             <h3 className="font-medium text-white mb-1">{ticket.subject}</h3>
                                             <p className="text-sm text-slate-400">
                                                 {ticket.category.replace('_', ' ')} • {ticket.raised_by.email} • {new Date(ticket.created_at).toLocaleDateString()}
+                                            </p>
+                                        </div>
+                                        <button className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors">
+                                            <MoreVertical className="w-4 h-4 text-slate-400" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {/* Recent Submissions Section for COMPANY_ADMIN */}
+                    {currentUser?.role === 'COMPANY_ADMIN' && recentSubmissions.length > 0 && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.5 }}
+                            className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 backdrop-blur-sm"
+                        >
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                                    <Activity className="w-5 h-5 text-emerald-500" />
+                                    Recent Submissions
+                                </h2>
+                                <button
+                                    onClick={() => router.push('/admin/submissions')}
+                                    className="text-emerald-500 hover:text-emerald-400 text-sm font-medium flex items-center gap-1"
+                                >
+                                    View All <ArrowRight className="w-4 h-4" />
+                                </button>
+                            </div>
+                            <div className="space-y-4">
+                                {recentSubmissions.map((submission, index) => (
+                                    <div key={submission.id} className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg border border-slate-700/50">
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                    submission.status === 'PENDING_CONSENT' ? 'bg-yellow-500/20 text-yellow-400' :
+                                                    submission.status === 'ACTIVE' ? 'bg-blue-500/20 text-blue-400' :
+                                                    submission.status === 'SCREENING' ? 'bg-purple-500/20 text-purple-400' :
+                                                    submission.status === 'INTERVIEWING' ? 'bg-orange-500/20 text-orange-400' :
+                                                    submission.status === 'OFFER_EXTENDED' ? 'bg-emerald-500/20 text-emerald-400' :
+                                                    submission.status === 'HIRED' ? 'bg-green-500/20 text-green-400' :
+                                                    'bg-red-500/20 text-red-400'
+                                                }`}>
+                                                    {submission.status.replace('_', ' ')}
+                                                </span>
+                                            </div>
+                                            <h3 className="font-medium text-white mb-1">{submission.candidate.full_name}</h3>
+                                            <p className="text-sm text-slate-400">
+                                                {submission.job.title} • {submission.candidate.email} • {new Date(submission.created_at).toLocaleDateString()}
                                             </p>
                                         </div>
                                         <button className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors">

@@ -74,6 +74,17 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             ];
         }
 
+        if (role === 'COMPANY_ADMIN') {
+            return [
+                ...baseNavigation,
+                { name: 'Jobs', href: '/admin/jobs', icon: Briefcase },
+                { name: 'Team Members', href: '/admin/team', icon: Users },
+                { name: 'Submissions', href: '/admin/submissions', icon: Activity },
+                { name: 'Payments', href: '/admin/payments', icon: DollarSign },
+                { name: 'Analytics', href: '/admin/analytics', icon: TrendingUp },
+            ];
+        }
+
         // Full admin navigation for other roles
         return [
             ...baseNavigation,

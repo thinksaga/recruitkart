@@ -14,10 +14,27 @@ export async function GET() {
 
         const payload = await verifyJWT(token);
 
-        // Check for internal staff roles
+        // Check for internal staff roles or COMPANY_ADMIN
         const internalRoles = ['SUPER_ADMIN', 'COMPLIANCE_OFFICER', 'SUPPORT_AGENT', 'OPERATOR', 'FINANCE_CONTROLLER'];
-        if (!payload || typeof payload.role !== 'string' || !internalRoles.includes(payload.role)) {
+        const allowedRoles = [...internalRoles, 'COMPANY_ADMIN'];
+        
+        if (!payload || typeof payload.role !== 'string' || !allowedRoles.includes(payload.role)) {
             return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
+        }
+
+        // For COMPANY_ADMIN, get their organization ID
+        let organizationFilter = {};
+        if (payload.role === 'COMPANY_ADMIN') {
+            const user = await prisma.user.findUnique({
+                where: { id: payload.userId as string },
+                select: { organization_id: true }
+            });
+            
+            if (!user?.organization_id) {
+                return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+            }
+            
+            organizationFilter = { organization_id: user.organization_id };
         }
 
         // Get current date ranges
@@ -33,16 +50,25 @@ export async function GET() {
         // Fetch all users, organizations, and jobs created in last 6 months
         const [usersData, jobsData, totalRevenue, monthlyRevenue] = await Promise.all([
             prisma.user.findMany({
-                where: { created_at: { gte: sixMonthsAgo } },
+                where: { 
+                    created_at: { gte: sixMonthsAgo },
+                    ...organizationFilter
+                },
                 select: { created_at: true, role: true },
             }),
             prisma.job.findMany({
-                where: { created_at: { gte: sixMonthsAgo } },
+                where: { 
+                    created_at: { gte: sixMonthsAgo },
+                    ...organizationFilter
+                },
                 select: { created_at: true, status: true },
             }),
             // Calculate total revenue from infra fees and success fees
             prisma.paymentRecord.aggregate({
-                where: { status: 'SUCCESS' },
+                where: { 
+                    status: 'SUCCESS',
+                    job: organizationFilter
+                },
                 _sum: { amount: true },
             }),
             // Monthly revenue
@@ -50,6 +76,7 @@ export async function GET() {
                 where: {
                     status: 'SUCCESS',
                     created_at: { gte: startOfMonth },
+                    job: organizationFilter
                 },
                 _sum: { amount: true },
             }),
@@ -102,17 +129,17 @@ export async function GET() {
 
         // Get all-time stats
         const [totalUsers, totalCompanies, totalJobs, totalSubmissions] = await Promise.all([
-            prisma.user.count(),
-            prisma.user.count({ where: { role: 'COMPANY_ADMIN' } }),
-            prisma.job.count(),
-            prisma.submission.count(),
+            prisma.user.count({ where: organizationFilter }),
+            prisma.user.count({ where: { role: 'COMPANY_ADMIN', ...organizationFilter } }),
+            prisma.job.count({ where: organizationFilter }),
+            prisma.submission.count({ where: { job: organizationFilter } }),
         ]);
 
         // Calculate platform metrics
         const [verifiedUsers, totalCandidates, hiredSubmissions] = await Promise.all([
-            prisma.user.count({ where: { verification_status: 'VERIFIED' } }),
-            prisma.candidate.count(),
-            prisma.submission.count({ where: { status: 'HIRED' } }),
+            prisma.user.count({ where: { verification_status: 'VERIFIED', ...organizationFilter } }),
+            prisma.candidate.count(), // Candidates are global, not organization-specific
+            prisma.submission.count({ where: { status: 'HIRED', job: organizationFilter } }),
         ]);
 
         const verificationRate = totalUsers > 0 ? Math.round((verifiedUsers / totalUsers) * 100) : 0;
@@ -120,7 +147,7 @@ export async function GET() {
 
         // Calculate average time to fill (days)
         const filledJobs = await prisma.job.findMany({
-            where: { status: 'FILLED' },
+            where: { status: 'FILLED', ...organizationFilter },
             select: { published_at: true, updated_at: true },
         });
 

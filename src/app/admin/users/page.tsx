@@ -95,6 +95,7 @@ export default function AdminUsersPage() {
             if (!res.ok) {
                 if (res.status === 401 || res.status === 403) {
                     router.push('/login');
+                    return; // Don't throw error for auth issues
                 }
                 throw new Error('Failed to fetch users');
             }

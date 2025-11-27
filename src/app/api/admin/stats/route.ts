@@ -14,13 +14,101 @@ export async function GET() {
 
         const payload = await verifyJWT(token);
 
-        // Check for internal staff roles
+        // Check for internal staff roles or COMPANY_ADMIN
         const internalRoles = ['SUPER_ADMIN', 'COMPLIANCE_OFFICER', 'SUPPORT_AGENT', 'OPERATOR', 'FINANCE_CONTROLLER'];
-        if (!payload || typeof payload.role !== 'string' || !internalRoles.includes(payload.role)) {
+        const allowedRoles = [...internalRoles, 'COMPANY_ADMIN'];
+        
+        if (!payload || typeof payload.role !== 'string' || !allowedRoles.includes(payload.role)) {
             return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
         }
 
-        // Get dashboard statistics
+        // For COMPANY_ADMIN, return organization-specific stats
+        if (payload.role === 'COMPANY_ADMIN') {
+            const user = await prisma.user.findUnique({
+                where: { id: payload.userId as string },
+                select: { organization_id: true }
+            });
+
+            if (!user?.organization_id) {
+                return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+            }
+
+            // Get organization-specific statistics
+            const [
+                activeJobs,
+                totalTeamMembers,
+                pendingSubmissions,
+                totalSubmissions,
+                recentPayments,
+            ] = await Promise.all([
+                prisma.job.count({ 
+                    where: { 
+                        organization_id: user.organization_id,
+                        status: { in: ['OPEN', 'PRIVATE'] }
+                    } 
+                }),
+                prisma.user.count({ 
+                    where: { 
+                        organization_id: user.organization_id,
+                        role: { in: ['COMPANY_ADMIN', 'COMPANY_MEMBER', 'INTERVIEWER', 'DECISION_MAKER'] }
+                    } 
+                }),
+                prisma.submission.count({ 
+                    where: { 
+                        job: { organization_id: user.organization_id },
+                        status: 'PENDING_CONSENT'
+                    } 
+                }),
+                prisma.submission.count({ 
+                    where: { 
+                        job: { organization_id: user.organization_id }
+                    } 
+                }),
+                prisma.paymentRecord.count({
+                    where: {
+                        job: { organization_id: user.organization_id }
+                    }
+                }),
+            ]);
+
+            // Get recent submissions for the organization
+            const recentSubmissions = await prisma.submission.findMany({
+                take: 10,
+                orderBy: { created_at: 'desc' },
+                where: {
+                    job: { organization_id: user.organization_id }
+                },
+                select: {
+                    id: true,
+                    status: true,
+                    created_at: true,
+                    candidate: {
+                        select: {
+                            full_name: true,
+                            email: true,
+                        },
+                    },
+                    job: {
+                        select: {
+                            title: true,
+                        },
+                    },
+                },
+            });
+
+            return NextResponse.json({
+                stats: {
+                    activeJobs,
+                    totalTeamMembers,
+                    pendingSubmissions,
+                    totalSubmissions,
+                    recentPayments,
+                },
+                recentSubmissions,
+            });
+        }
+
+        // Get dashboard statistics for internal staff
         const [
             totalUsers,
             pendingUsers,

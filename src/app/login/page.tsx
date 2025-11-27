@@ -50,9 +50,10 @@ export default function LoginPage() {
 
             // --- SCHEMA V7 UPDATE: Redirect based on new Role Enums ---
             const internalRoles = ['SUPER_ADMIN', 'SUPPORT_AGENT', 'COMPLIANCE_OFFICER', 'FINANCE_CONTROLLER'];
-            const companyRoles = ['COMPANY_ADMIN', 'COMPANY_MEMBER', 'INTERVIEWER', 'DECISION_MAKER'];
+            const adminRoles = ['SUPER_ADMIN', 'SUPPORT_AGENT', 'COMPLIANCE_OFFICER', 'FINANCE_CONTROLLER', 'COMPANY_ADMIN'];
+            const companyRoles = ['COMPANY_MEMBER', 'INTERVIEWER', 'DECISION_MAKER'];
 
-            if (internalRoles.includes(userRole)) {
+            if (adminRoles.includes(userRole)) {
                 router.push('/admin');
             } else if (companyRoles.includes(userRole)) {
                 router.push('/dashboard/company');

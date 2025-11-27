@@ -14,13 +14,31 @@ export async function GET() {
 
         const payload = await verifyJWT(token);
 
-        // Check for internal staff roles
+        // Check for internal staff roles or COMPANY_ADMIN
         const internalRoles = ['SUPER_ADMIN', 'COMPLIANCE_OFFICER', 'SUPPORT_AGENT', 'OPERATOR', 'FINANCE_CONTROLLER'];
-        if (!payload || typeof payload.role !== 'string' || !internalRoles.includes(payload.role)) {
+        const allowedRoles = [...internalRoles, 'COMPANY_ADMIN'];
+        
+        if (!payload || typeof payload.role !== 'string' || !allowedRoles.includes(payload.role)) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
+        // For COMPANY_ADMIN, only show jobs from their organization
+        let whereClause = {};
+        if (payload.role === 'COMPANY_ADMIN') {
+            const user = await prisma.user.findUnique({
+                where: { id: payload.userId as string },
+                select: { organization_id: true }
+            });
+            
+            if (!user?.organization_id) {
+                return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+            }
+            
+            whereClause = { organization_id: user.organization_id };
+        }
+
         const jobs = await prisma.job.findMany({
+            where: whereClause,
             orderBy: { created_at: 'desc' },
             include: {
                 organization: {
