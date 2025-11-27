@@ -40,11 +40,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# prisma
 /src/generated/prisma
-# We keep prisma/migrations in version control to track DB changes
-# prisma/migrations/
 
 docker/
 test-results/
 package-lock.json
+
+prisma/migrations/
