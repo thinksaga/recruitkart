@@ -24,35 +24,78 @@ import {
     Wallet,
     Lock
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface AdminLayoutProps {
     children: ReactNode;
+}
+
+interface CurrentUser {
+    id: string;
+    email: string;
+    role: string;
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
     const pathname = usePathname();
     const router = useRouter();
     const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
 
-    const navigation = [
-        { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-        { name: 'Users', href: '/admin/users', icon: Users },
-        { name: 'Organizations', href: '/admin/organizations', icon: Building2 },
-        { name: 'Jobs', href: '/admin/jobs', icon: Briefcase },
-        { name: 'Submissions', href: '/admin/submissions', icon: Activity },
-        { name: 'Candidates', href: '/admin/candidates', icon: UserCheck },
-        { name: 'Job Change Requests', href: '/admin/job-change-requests', icon: FileText },
-        { name: 'Invitations', href: '/admin/invitations', icon: Mail },
-        { name: 'Escrow', href: '/admin/escrow', icon: Wallet },
-        { name: 'Payouts', href: '/admin/payouts', icon: DollarSign },
-        { name: 'Credits & Wallet', href: '/admin/credits', icon: CreditCard },
-        { name: 'DPDP Compliance', href: '/admin/dpdp', icon: Lock },
-        { name: 'Analytics', href: '/admin/analytics', icon: TrendingUp },
-        { name: 'Support Tickets', href: '/admin/tickets', icon: AlertCircle },
-        { name: 'Audit Logs', href: '/admin/audit', icon: Shield },
-        { name: 'Settings', href: '/admin/settings', icon: Settings },
-    ];
+    useEffect(() => {
+        fetchCurrentUser();
+    }, []);
+
+    const fetchCurrentUser = async () => {
+        try {
+            const res = await fetch('/api/auth/me');
+            if (res.ok) {
+                const data = await res.json();
+                setCurrentUser(data.user);
+            }
+        } catch (error) {
+            console.error('Error fetching current user:', error);
+        }
+    };
+
+    // Role-based navigation
+    const getNavigation = (role: string) => {
+        const baseNavigation = [
+            { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+        ];
+
+        if (role === 'SUPPORT_AGENT') {
+            return [
+                ...baseNavigation,
+                { name: 'Support Tickets', href: '/admin/tickets', icon: AlertCircle },
+                { name: 'Users', href: '/admin/users', icon: Users }, // Read-only access
+                { name: 'Analytics', href: '/admin/analytics', icon: TrendingUp },
+                { name: 'Audit Logs', href: '/admin/audit', icon: Shield },
+            ];
+        }
+
+        // Full admin navigation for other roles
+        return [
+            ...baseNavigation,
+            { name: 'Users', href: '/admin/users', icon: Users },
+            { name: 'Organizations', href: '/admin/organizations', icon: Building2 },
+            { name: 'Jobs', href: '/admin/jobs', icon: Briefcase },
+            { name: 'Submissions', href: '/admin/submissions', icon: Activity },
+            { name: 'Candidates', href: '/admin/candidates', icon: UserCheck },
+            { name: 'Job Change Requests', href: '/admin/job-change-requests', icon: FileText },
+            { name: 'Invitations', href: '/admin/invitations', icon: Mail },
+            { name: 'Escrow', href: '/admin/escrow', icon: Wallet },
+            { name: 'Payouts', href: '/admin/payouts', icon: DollarSign },
+            { name: 'Credits & Wallet', href: '/admin/credits', icon: CreditCard },
+            { name: 'DPDP Compliance', href: '/admin/dpdp', icon: Lock },
+            { name: 'Analytics', href: '/admin/analytics', icon: TrendingUp },
+            { name: 'Support Tickets', href: '/admin/tickets', icon: AlertCircle },
+            { name: 'Audit Logs', href: '/admin/audit', icon: Shield },
+            { name: 'Settings', href: '/admin/settings', icon: Settings },
+        ];
+    };
+
+    const navigation = currentUser ? getNavigation(currentUser.role) : [];
 
     const handleLogout = async () => {
         try {
@@ -146,11 +189,17 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
                     <div className="flex items-center gap-4">
                         <div className="text-right">
-                            <p className="text-sm font-medium text-white">Admin User</p>
-                            <p className="text-xs text-slate-400">admin@recruitkart.com</p>
+                            <p className="text-sm font-medium text-white">
+                                {currentUser?.role ? `${currentUser.role.replace('_', ' ')}` : 'Admin User'}
+                            </p>
+                            <p className="text-xs text-slate-400">
+                                {currentUser?.email || 'admin@recruitkart.com'}
+                            </p>
                         </div>
                         <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-full flex items-center justify-center">
-                            <span className="text-white font-bold text-sm">A</span>
+                            <span className="text-white font-bold text-sm">
+                                {currentUser?.email ? currentUser.email.charAt(0).toUpperCase() : 'A'}
+                            </span>
                         </div>
                     </div>
                 </header>

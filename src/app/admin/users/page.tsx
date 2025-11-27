@@ -53,6 +53,7 @@ export default function AdminUsersPage() {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [organizations, setOrganizations] = useState<any[]>([]);
+    const [currentUser, setCurrentUser] = useState<any>(null);
     const [formData, setFormData] = useState({
         email: '',
         phone: '',
@@ -68,12 +69,25 @@ export default function AdminUsersPage() {
     const [processing, setProcessing] = useState(false);
 
     useEffect(() => {
+        fetchCurrentUser();
         fetchUsers();
     }, []);
 
     useEffect(() => {
         filterUsers();
     }, [users, searchTerm, statusFilter, roleFilter]);
+
+    const fetchCurrentUser = async () => {
+        try {
+            const res = await fetch('/api/auth/me');
+            if (res.ok) {
+                const data = await res.json();
+                setCurrentUser(data.user);
+            }
+        } catch (error) {
+            console.error('Error fetching current user:', error);
+        }
+    };
 
     const fetchUsers = async () => {
         try {
@@ -292,15 +306,22 @@ export default function AdminUsersPage() {
                     <div className="flex items-center justify-between">
                         <div>
                             <h1 className="text-4xl font-bold mb-2">User Management</h1>
-                            <p className="text-slate-400">View and manage all platform users</p>
+                            <p className="text-slate-400">
+                                {currentUser?.role === 'SUPPORT_AGENT'
+                                    ? 'View user information to assist with support requests'
+                                    : 'View and manage all platform users'
+                                }
+                            </p>
                         </div>
-                        <button
-                            onClick={openCreateModal}
-                            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-white font-medium transition-colors"
-                        >
-                            <Plus className="w-4 h-4" />
-                            Add User
-                        </button>
+                        {currentUser?.role !== 'SUPPORT_AGENT' && (
+                            <button
+                                onClick={openCreateModal}
+                                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-white font-medium transition-colors"
+                            >
+                                <Plus className="w-4 h-4" />
+                                Add User
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -448,21 +469,25 @@ export default function AdminUsersPage() {
                                         </td>
                                         <td className="py-4 px-6">
                                             <div className="flex gap-2">
-                                                <button
-                                                    onClick={() => openEditModal(user)}
-                                                    className="p-2 text-slate-400 hover:text-blue-400 hover:bg-slate-800 rounded transition-colors"
-                                                    title="Edit User"
-                                                >
-                                                    <Edit className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => openDeleteModal(user)}
-                                                    className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded transition-colors"
-                                                    title="Delete User"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                                {user.verification_status !== 'VERIFIED' && (
+                                                {currentUser?.role !== 'SUPPORT_AGENT' && (
+                                                    <>
+                                                        <button
+                                                            onClick={() => openEditModal(user)}
+                                                            className="p-2 text-slate-400 hover:text-blue-400 hover:bg-slate-800 rounded transition-colors"
+                                                            title="Edit User"
+                                                        >
+                                                            <Edit className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => openDeleteModal(user)}
+                                                            className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded transition-colors"
+                                                            title="Delete User"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </>
+                                                )}
+                                                {user.verification_status !== 'VERIFIED' && currentUser?.role !== 'SUPPORT_AGENT' && (
                                                     <button
                                                         onClick={() => updateUserStatus(user.id, 'VERIFIED')}
                                                         className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-xs font-medium transition-colors"
@@ -470,7 +495,7 @@ export default function AdminUsersPage() {
                                                         Verify
                                                     </button>
                                                 )}
-                                                {user.verification_status !== 'REJECTED' && (
+                                                {user.verification_status !== 'REJECTED' && currentUser?.role !== 'SUPPORT_AGENT' && (
                                                     <button
                                                         onClick={() => updateUserStatus(user.id, 'REJECTED')}
                                                         className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-xs font-medium transition-colors"

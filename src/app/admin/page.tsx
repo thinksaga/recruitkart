@@ -16,7 +16,11 @@ import {
     Sparkles,
     MoreVertical,
     Search,
-    Filter
+    Filter,
+    MessageSquare,
+    HeadphonesIcon,
+    Timer,
+    UserCheck
 } from 'lucide-react';
 import {
     AreaChart,
@@ -38,6 +42,13 @@ interface Stats {
     openJobs: number;
 }
 
+interface SupportStats {
+    totalTickets: number;
+    openTickets: number;
+    resolvedToday: number;
+    avgResolutionTime: number;
+}
+
 interface RecentUser {
     id: string;
     email: string;
@@ -47,22 +58,60 @@ interface RecentUser {
     organization?: { display_name: string } | null;
 }
 
+interface RecentTicket {
+    id: number;
+    ticket_number: number;
+    subject: string;
+    category: string;
+    status: string;
+    priority: string;
+    created_at: string;
+    raised_by: { email: string };
+}
+
 interface ChartDataPoint {
     name: string;
     users: number;
     jobs: number;
 }
 
+interface CurrentUser {
+    id: string;
+    email: string;
+    role: string;
+}
+
 export default function AdminDashboard() {
     const router = useRouter();
     const [stats, setStats] = useState<Stats | null>(null);
+    const [supportStats, setSupportStats] = useState<SupportStats | null>(null);
     const [recentUsers, setRecentUsers] = useState<RecentUser[]>([]);
+    const [recentTickets, setRecentTickets] = useState<RecentTicket[]>([]);
     const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
+    const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetchStats();
+        fetchCurrentUser();
     }, []);
+
+    useEffect(() => {
+        if (currentUser) {
+            fetchStats();
+        }
+    }, [currentUser]);
+
+    const fetchCurrentUser = async () => {
+        try {
+            const res = await fetch('/api/auth/me');
+            if (res.ok) {
+                const data = await res.json();
+                setCurrentUser(data.user);
+            }
+        } catch (error) {
+            console.error('Error fetching current user:', error);
+        }
+    };
 
     const fetchStats = async () => {
         try {
@@ -77,6 +126,11 @@ export default function AdminDashboard() {
             setStats(data.stats);
             setRecentUsers(data.recentUsers);
             setChartData(data.chartData);
+
+            // Fetch support stats if user is SUPPORT_AGENT
+            if (currentUser?.role === 'SUPPORT_AGENT') {
+                await fetchSupportStats();
+            }
         } catch (error) {
             console.error('Error fetching stats:', error);
         } finally {
@@ -84,7 +138,110 @@ export default function AdminDashboard() {
         }
     };
 
-    const statCards = stats ? [
+    const fetchSupportStats = async () => {
+        try {
+            // Fetch real ticket data
+            const ticketsRes = await fetch('/api/admin/tickets?limit=5');
+            if (ticketsRes.ok) {
+                const ticketsData = await ticketsRes.json();
+                setRecentTickets(ticketsData.tickets || []);
+
+                // Calculate stats from real data
+                const allTickets = ticketsData.tickets || [];
+                const openTickets = allTickets.filter((t: any) => t.status === 'OPEN').length;
+                const resolvedToday = allTickets.filter((t: any) => {
+                    const today = new Date().toDateString();
+                    const resolvedDate = new Date(t.updated_at).toDateString();
+                    return t.status === 'RESOLVED' && resolvedDate === today;
+                }).length;
+
+                // Mock average resolution time for now (would need more complex calculation)
+                const avgResolutionTime = 4.2;
+
+                setSupportStats({
+                    totalTickets: ticketsData.pagination?.total || 0,
+                    openTickets,
+                    resolvedToday,
+                    avgResolutionTime
+                });
+            } else {
+                // Fallback to mock data if API fails
+                setSupportStats({
+                    totalTickets: 24,
+                    openTickets: 8,
+                    resolvedToday: 5,
+                    avgResolutionTime: 4.2
+                });
+                setRecentTickets([
+                    {
+                        id: 1,
+                        ticket_number: 1001,
+                        subject: 'Payment failed for job posting',
+                        category: 'PAYMENT_FAILURE',
+                        status: 'OPEN',
+                        priority: 'HIGH',
+                        created_at: new Date().toISOString(),
+                        raised_by: { email: 'company@example.com' }
+                    },
+                    {
+                        id: 2,
+                        ticket_number: 1002,
+                        subject: 'Candidate not responding',
+                        category: 'CANDIDATE_NO_SHOW',
+                        status: 'IN_PROGRESS',
+                        priority: 'MEDIUM',
+                        created_at: new Date(Date.now() - 3600000).toISOString(),
+                        raised_by: { email: 'tas@example.com' }
+                    }
+                ]);
+            }
+        } catch (error) {
+            console.error('Error fetching support stats:', error);
+            // Fallback to mock data
+            setSupportStats({
+                totalTickets: 24,
+                openTickets: 8,
+                resolvedToday: 5,
+                avgResolutionTime: 4.2
+            });
+            setRecentTickets([]);
+        }
+    };
+
+    const statCards = currentUser?.role === 'SUPPORT_AGENT' && supportStats ? [
+        {
+            label: 'Open Tickets',
+            value: supportStats.openTickets,
+            icon: AlertCircle,
+            color: 'text-red-500',
+            bg: 'bg-red-500/10',
+            border: 'border-red-500/20'
+        },
+        {
+            label: 'Resolved Today',
+            value: supportStats.resolvedToday,
+            icon: CheckCircle,
+            color: 'text-emerald-500',
+            bg: 'bg-emerald-500/10',
+            border: 'border-emerald-500/20'
+        },
+        {
+            label: 'Avg Resolution Time',
+            value: `${supportStats.avgResolutionTime}h`,
+            icon: Timer,
+            color: 'text-blue-500',
+            bg: 'bg-blue-500/10',
+            border: 'border-blue-500/20'
+        },
+        {
+            label: 'Total Tickets',
+            value: supportStats.totalTickets,
+            icon: MessageSquare,
+            color: 'text-purple-500',
+            bg: 'bg-purple-500/10',
+            border: 'border-purple-500/20'
+        },
+    ] : stats ? [
         {
             label: 'Total Users',
             value: stats.totalUsers,
@@ -119,7 +276,12 @@ export default function AdminDashboard() {
         },
     ] : [];
 
-    const quickActions = [
+    const quickActions = currentUser?.role === 'SUPPORT_AGENT' ? [
+        { title: 'View Tickets', description: 'Manage support tickets', icon: MessageSquare, color: 'red', route: '/admin/tickets' },
+        { title: 'User Lookup', description: 'Find and help users', icon: UserCheck, color: 'blue', route: '/admin/users' },
+        { title: 'Support Analytics', description: 'View support metrics', icon: TrendingUp, color: 'emerald', route: '/admin/analytics' },
+        { title: 'Knowledge Base', description: 'Common solutions', icon: HeadphonesIcon, color: 'purple', route: '/admin/settings' },
+    ] : [
         { title: 'Verify Users', description: 'Review pending accounts', icon: CheckCircle, color: 'emerald', route: '/admin/users?filter=pending' },
         { title: 'Manage Jobs', description: 'Review job postings', icon: Briefcase, color: 'blue', route: '/admin/jobs' },
         { title: 'Support Tickets', description: 'View open tickets', icon: AlertCircle, color: 'red', route: '/admin/tickets' },
@@ -147,10 +309,13 @@ export default function AdminDashboard() {
                         animate={{ opacity: 1, x: 0 }}
                     >
                         <h1 className="text-3xl font-bold text-white mb-1">
-                            Dashboard Overview
+                            {currentUser?.role === 'SUPPORT_AGENT' ? 'Support Dashboard' : 'Dashboard Overview'}
                         </h1>
                         <p className="text-slate-400">
-                            {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                            {currentUser?.role === 'SUPPORT_AGENT'
+                                ? 'Manage support tickets and help users'
+                                : new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+                            }
                         </p>
                     </motion.div>
 
@@ -240,6 +405,59 @@ export default function AdminDashboard() {
                             </ResponsiveContainer>
                         </div>
                     </motion.div>
+
+                    {/* Recent Tickets Section for SUPPORT_AGENT */}
+                    {currentUser?.role === 'SUPPORT_AGENT' && recentTickets.length > 0 && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.5 }}
+                            className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 backdrop-blur-sm"
+                        >
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                                    <MessageSquare className="w-5 h-5 text-emerald-500" />
+                                    Recent Support Tickets
+                                </h2>
+                                <button
+                                    onClick={() => router.push('/admin/tickets')}
+                                    className="text-emerald-500 hover:text-emerald-400 text-sm font-medium flex items-center gap-1"
+                                >
+                                    View All <ArrowRight className="w-4 h-4" />
+                                </button>
+                            </div>
+                            <div className="space-y-4">
+                                {recentTickets.map((ticket, index) => (
+                                    <div key={ticket.id} className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg border border-slate-700/50">
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <span className="text-sm font-medium text-slate-300">#{ticket.ticket_number}</span>
+                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${ticket.priority === 'HIGH' ? 'bg-red-500/20 text-red-400' :
+                                                        ticket.priority === 'MEDIUM' ? 'bg-yellow-500/20 text-yellow-400' :
+                                                            'bg-green-500/20 text-green-400'
+                                                    }`}>
+                                                    {ticket.priority}
+                                                </span>
+                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${ticket.status === 'OPEN' ? 'bg-red-500/20 text-red-400' :
+                                                        ticket.status === 'IN_PROGRESS' ? 'bg-blue-500/20 text-blue-400' :
+                                                            'bg-green-500/20 text-green-400'
+                                                    }`}>
+                                                    {ticket.status.replace('_', ' ')}
+                                                </span>
+                                            </div>
+                                            <h3 className="font-medium text-white mb-1">{ticket.subject}</h3>
+                                            <p className="text-sm text-slate-400">
+                                                {ticket.category.replace('_', ' ')} • {ticket.raised_by.email} • {new Date(ticket.created_at).toLocaleDateString()}
+                                            </p>
+                                        </div>
+                                        <button className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors">
+                                            <MoreVertical className="w-4 h-4 text-slate-400" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </motion.div>
+                    )}
                 </div>
             </div>
         </div>

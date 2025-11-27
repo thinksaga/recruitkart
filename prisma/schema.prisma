@@ -178,6 +178,10 @@ model User {
   locked_until        DateTime?
   last_password_change DateTime?         @default(now())
   
+  // Password Reset
+  reset_token         String?
+  reset_token_expiry  DateTime?
+  
   // Metadata
   last_login_at       DateTime?
   last_ip_address     String?

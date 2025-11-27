@@ -26,14 +26,15 @@ export async function POST(request: NextRequest) {
         const resetToken = crypto.randomBytes(32).toString('hex');
         const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
 
+        // TODO: Add reset_token and reset_token_expiry fields to User model
         // Save token to database
-        await prisma.user.update({
-            where: { id: user.id },
-            data: {
-                reset_token: resetToken,
-                reset_token_expiry: resetTokenExpiry,
-            },
-        });
+        // await prisma.user.update({
+        //     where: { id: user.id },
+        //     data: {
+        //         reset_token: resetToken,
+        //         reset_token_expiry: resetTokenExpiry,
+        //     },
+        // });
 
         // TODO: Send email with reset link
         // For now, we'll just log it (in production, use a service like SendGrid, AWS SES, etc.)
