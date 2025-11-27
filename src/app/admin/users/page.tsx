@@ -11,12 +11,17 @@ import {
     Filter,
     ArrowLeft,
     Building2,
-    User
+    User,
+    Plus,
+    Edit,
+    Trash2,
+    X,
 } from 'lucide-react';
 
 interface User {
     id: string;
     email: string;
+    phone?: string;
     role: string;
     verification_status: string;
     created_at: string;
@@ -28,6 +33,7 @@ interface User {
         website?: string;
     } | null;
     tas_profile?: {
+        full_name?: string;
         pan_number: string;
         linkedin_url?: string;
         credits_balance: number;
@@ -42,6 +48,24 @@ export default function AdminUsersPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('ALL');
     const [roleFilter, setRoleFilter] = useState('ALL');
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    const [organizations, setOrganizations] = useState<any[]>([]);
+    const [formData, setFormData] = useState({
+        email: '',
+        phone: '',
+        role: 'COMPANY_ADMIN',
+        organizationId: '',
+        tasProfile: {
+            fullName: '',
+            panNumber: '',
+            linkedinUrl: '',
+            creditsBalance: 0,
+        },
+    });
+    const [processing, setProcessing] = useState(false);
 
     useEffect(() => {
         fetchUsers();
@@ -108,6 +132,143 @@ export default function AdminUsersPage() {
         }
     };
 
+    const fetchOrganizations = async () => {
+        try {
+            const res = await fetch('/api/admin/organizations');
+            if (res.ok) {
+                const data = await res.json();
+                setOrganizations(data.organizations || []);
+            }
+        } catch (error) {
+            console.error('Error fetching organizations:', error);
+        }
+    };
+
+    const openCreateModal = () => {
+        setFormData({
+            email: '',
+            phone: '',
+            role: 'COMPANY_ADMIN',
+            organizationId: '',
+            tasProfile: {
+                fullName: '',
+                panNumber: '',
+                linkedinUrl: '',
+                creditsBalance: 0,
+            },
+        });
+        setShowCreateModal(true);
+    };
+
+    const openEditModal = (user: User) => {
+        setSelectedUser(user);
+        setFormData({
+            email: user.email,
+            phone: user.phone || '',
+            role: user.role,
+            organizationId: user.organization?.id || '',
+            tasProfile: {
+                fullName: user.tas_profile?.full_name || '',
+                panNumber: user.tas_profile?.pan_number || '',
+                linkedinUrl: user.tas_profile?.linkedin_url || '',
+                creditsBalance: user.tas_profile?.credits_balance || 0,
+            },
+        });
+        setShowEditModal(true);
+    };
+
+    const openDeleteModal = (user: User) => {
+        setSelectedUser(user);
+        setShowDeleteModal(true);
+    };
+
+    const handleCreateUser = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setProcessing(true);
+
+        try {
+            const res = await fetch('/api/admin/users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData),
+            });
+
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.error || 'Failed to create user');
+            }
+
+            setShowCreateModal(false);
+            fetchUsers();
+            alert('User created successfully!');
+        } catch (error: any) {
+            console.error('Error creating user:', error);
+            alert(error.message || 'Failed to create user');
+        } finally {
+            setProcessing(false);
+        }
+    };
+
+    const handleUpdateUser = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedUser) return;
+
+        setProcessing(true);
+
+        try {
+            const res = await fetch('/api/admin/users', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: selectedUser.id, ...formData }),
+            });
+
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.error || 'Failed to update user');
+            }
+
+            setShowEditModal(false);
+            fetchUsers();
+            alert('User updated successfully!');
+        } catch (error: any) {
+            console.error('Error updating user:', error);
+            alert(error.message || 'Failed to update user');
+        } finally {
+            setProcessing(false);
+        }
+    };
+
+    const handleDeleteUser = async () => {
+        if (!selectedUser) return;
+
+        setProcessing(true);
+
+        try {
+            const res = await fetch(`/api/admin/users?id=${selectedUser.id}`, {
+                method: 'DELETE',
+            });
+
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.error || 'Failed to delete user');
+            }
+
+            setShowDeleteModal(false);
+            fetchUsers();
+            alert('User deleted successfully!');
+        } catch (error: any) {
+            console.error('Error deleting user:', error);
+            alert(error.message || 'Failed to delete user');
+        } finally {
+            setProcessing(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchUsers();
+        fetchOrganizations();
+    }, []);
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-slate-950">
@@ -128,8 +289,19 @@ export default function AdminUsersPage() {
                         <ArrowLeft className="w-4 h-4" />
                         Back to Dashboard
                     </button>
-                    <h1 className="text-4xl font-bold mb-2">User Management</h1>
-                    <p className="text-slate-400">View and manage all platform users</p>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="text-4xl font-bold mb-2">User Management</h1>
+                            <p className="text-slate-400">View and manage all platform users</p>
+                        </div>
+                        <button
+                            onClick={openCreateModal}
+                            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-white font-medium transition-colors"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Add User
+                        </button>
+                    </div>
                 </div>
 
                 {/* Filters */}
@@ -276,6 +448,20 @@ export default function AdminUsersPage() {
                                         </td>
                                         <td className="py-4 px-6">
                                             <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => openEditModal(user)}
+                                                    className="p-2 text-slate-400 hover:text-blue-400 hover:bg-slate-800 rounded transition-colors"
+                                                    title="Edit User"
+                                                >
+                                                    <Edit className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => openDeleteModal(user)}
+                                                    className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded transition-colors"
+                                                    title="Delete User"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
                                                 {user.verification_status !== 'VERIFIED' && (
                                                     <button
                                                         onClick={() => updateUserStatus(user.id, 'VERIFIED')}
@@ -300,6 +486,341 @@ export default function AdminUsersPage() {
                         </table>
                     </div>
                 </div>
+
+                {/* Create User Modal */}
+                {showCreateModal && (
+                    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <div className="bg-slate-900 rounded-2xl shadow-2xl border border-slate-800 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                            <div className="sticky top-0 bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+                                <h2 className="text-xl font-bold text-white">Create New User</h2>
+                                <button
+                                    onClick={() => setShowCreateModal(false)}
+                                    className="text-slate-400 hover:text-slate-200"
+                                >
+                                    <X className="w-6 h-6" />
+                                </button>
+                            </div>
+                            <form onSubmit={handleCreateUser} className="p-6 space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">Email *</label>
+                                        <input
+                                            type="email"
+                                            required
+                                            value={formData.email}
+                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                            placeholder="user@example.com"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">Phone</label>
+                                        <input
+                                            type="tel"
+                                            value={formData.phone}
+                                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                            placeholder="+91 9876543210"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">Role *</label>
+                                        <select
+                                            required
+                                            value={formData.role}
+                                            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                        >
+                                            <option value="COMPANY_ADMIN">Company Admin</option>
+                                            <option value="TAS">TAS</option>
+                                            <option value="ADMIN">Admin</option>
+                                            <option value="SUPPORT">Support</option>
+                                            <option value="OPERATOR">Operator</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">Organization</label>
+                                        <select
+                                            value={formData.organizationId}
+                                            onChange={(e) => setFormData({ ...formData, organizationId: e.target.value })}
+                                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                        >
+                                            <option value="">No Organization</option>
+                                            {organizations.map((org) => (
+                                                <option key={org.id} value={org.id}>{org.display_name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {formData.role === 'TAS' && (
+                                    <div className="border-t border-slate-800 pt-6">
+                                        <h3 className="text-lg font-medium text-white mb-4">TAS Profile</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-300 mb-2">Full Name</label>
+                                                <input
+                                                    type="text"
+                                                    value={formData.tasProfile.fullName}
+                                                    onChange={(e) => setFormData({
+                                                        ...formData,
+                                                        tasProfile: { ...formData.tasProfile, fullName: e.target.value }
+                                                    })}
+                                                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                                    placeholder="John Doe"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-300 mb-2">PAN Number</label>
+                                                <input
+                                                    type="text"
+                                                    value={formData.tasProfile.panNumber}
+                                                    onChange={(e) => setFormData({
+                                                        ...formData,
+                                                        tasProfile: { ...formData.tasProfile, panNumber: e.target.value }
+                                                    })}
+                                                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                                    placeholder="ABCDE1234F"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-300 mb-2">LinkedIn URL</label>
+                                                <input
+                                                    type="url"
+                                                    value={formData.tasProfile.linkedinUrl}
+                                                    onChange={(e) => setFormData({
+                                                        ...formData,
+                                                        tasProfile: { ...formData.tasProfile, linkedinUrl: e.target.value }
+                                                    })}
+                                                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                                    placeholder="https://linkedin.com/in/username"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-300 mb-2">Credits Balance</label>
+                                                <input
+                                                    type="number"
+                                                    value={formData.tasProfile.creditsBalance}
+                                                    onChange={(e) => setFormData({
+                                                        ...formData,
+                                                        tasProfile: { ...formData.tasProfile, creditsBalance: parseInt(e.target.value) || 0 }
+                                                    })}
+                                                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                                    placeholder="0"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="flex gap-4 pt-6 border-t border-slate-800">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowCreateModal(false)}
+                                        className="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 font-medium transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={processing}
+                                        className="flex-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-colors"
+                                    >
+                                        {processing ? 'Creating...' : 'Create User'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
+                {/* Edit User Modal */}
+                {showEditModal && (
+                    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <div className="bg-slate-900 rounded-2xl shadow-2xl border border-slate-800 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                            <div className="sticky top-0 bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+                                <h2 className="text-xl font-bold text-white">Edit User</h2>
+                                <button
+                                    onClick={() => setShowEditModal(false)}
+                                    className="text-slate-400 hover:text-slate-200"
+                                >
+                                    <X className="w-6 h-6" />
+                                </button>
+                            </div>
+                            <form onSubmit={handleUpdateUser} className="p-6 space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">Email *</label>
+                                        <input
+                                            type="email"
+                                            required
+                                            value={formData.email}
+                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                            placeholder="user@example.com"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">Phone</label>
+                                        <input
+                                            type="tel"
+                                            value={formData.phone}
+                                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                            placeholder="+91 9876543210"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">Role *</label>
+                                        <select
+                                            required
+                                            value={formData.role}
+                                            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                        >
+                                            <option value="COMPANY_ADMIN">Company Admin</option>
+                                            <option value="TAS">TAS</option>
+                                            <option value="ADMIN">Admin</option>
+                                            <option value="SUPPORT">Support</option>
+                                            <option value="OPERATOR">Operator</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">Organization</label>
+                                        <select
+                                            value={formData.organizationId}
+                                            onChange={(e) => setFormData({ ...formData, organizationId: e.target.value })}
+                                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                        >
+                                            <option value="">No Organization</option>
+                                            {organizations.map((org) => (
+                                                <option key={org.id} value={org.id}>{org.display_name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {formData.role === 'TAS' && (
+                                    <div className="border-t border-slate-800 pt-6">
+                                        <h3 className="text-lg font-medium text-white mb-4">TAS Profile</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-300 mb-2">Full Name</label>
+                                                <input
+                                                    type="text"
+                                                    value={formData.tasProfile.fullName}
+                                                    onChange={(e) => setFormData({
+                                                        ...formData,
+                                                        tasProfile: { ...formData.tasProfile, fullName: e.target.value }
+                                                    })}
+                                                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                                    placeholder="John Doe"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-300 mb-2">PAN Number</label>
+                                                <input
+                                                    type="text"
+                                                    value={formData.tasProfile.panNumber}
+                                                    onChange={(e) => setFormData({
+                                                        ...formData,
+                                                        tasProfile: { ...formData.tasProfile, panNumber: e.target.value }
+                                                    })}
+                                                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                                    placeholder="ABCDE1234F"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-300 mb-2">LinkedIn URL</label>
+                                                <input
+                                                    type="url"
+                                                    value={formData.tasProfile.linkedinUrl}
+                                                    onChange={(e) => setFormData({
+                                                        ...formData,
+                                                        tasProfile: { ...formData.tasProfile, linkedinUrl: e.target.value }
+                                                    })}
+                                                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                                    placeholder="https://linkedin.com/in/username"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-300 mb-2">Credits Balance</label>
+                                                <input
+                                                    type="number"
+                                                    value={formData.tasProfile.creditsBalance}
+                                                    onChange={(e) => setFormData({
+                                                        ...formData,
+                                                        tasProfile: { ...formData.tasProfile, creditsBalance: parseInt(e.target.value) || 0 }
+                                                    })}
+                                                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                                    placeholder="0"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="flex gap-4 pt-6 border-t border-slate-800">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowEditModal(false)}
+                                        className="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 font-medium transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={processing}
+                                        className="flex-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-colors"
+                                    >
+                                        {processing ? 'Updating...' : 'Update User'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
+                {/* Delete User Modal */}
+                {showDeleteModal && selectedUser && (
+                    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <div className="bg-slate-900 rounded-2xl shadow-2xl border border-slate-800 max-w-md w-full">
+                            <div className="p-6">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="p-3 bg-red-600/20 rounded-full">
+                                        <Trash2 className="w-6 h-6 text-red-400" />
+                                    </div>
+                                    <h2 className="text-xl font-bold text-white">Delete User</h2>
+                                </div>
+                                <p className="text-slate-300 mb-6">
+                                    Are you sure you want to delete <span className="font-medium text-white">{selectedUser.email}</span>?
+                                    This action cannot be undone.
+                                </p>
+                                <div className="flex gap-4">
+                                    <button
+                                        onClick={() => setShowDeleteModal(false)}
+                                        className="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 font-medium transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleDeleteUser}
+                                        disabled={processing}
+                                        className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-colors"
+                                    >
+                                        {processing ? 'Deleting...' : 'Delete User'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

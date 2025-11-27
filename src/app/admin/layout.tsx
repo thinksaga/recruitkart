@@ -15,7 +15,14 @@ import {
     Settings,
     LogOut,
     Menu,
-    X
+    X,
+    DollarSign,
+    CreditCard,
+    FileText,
+    UserCheck,
+    Mail,
+    Wallet,
+    Lock
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -34,6 +41,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         { name: 'Organizations', href: '/admin/organizations', icon: Building2 },
         { name: 'Jobs', href: '/admin/jobs', icon: Briefcase },
         { name: 'Submissions', href: '/admin/submissions', icon: Activity },
+        { name: 'Candidates', href: '/admin/candidates', icon: UserCheck },
+        { name: 'Job Change Requests', href: '/admin/job-change-requests', icon: FileText },
+        { name: 'Invitations', href: '/admin/invitations', icon: Mail },
+        { name: 'Escrow', href: '/admin/escrow', icon: Wallet },
+        { name: 'Payouts', href: '/admin/payouts', icon: DollarSign },
+        { name: 'Credits & Wallet', href: '/admin/credits', icon: CreditCard },
+        { name: 'DPDP Compliance', href: '/admin/dpdp', icon: Lock },
         { name: 'Analytics', href: '/admin/analytics', icon: TrendingUp },
         { name: 'Support Tickets', href: '/admin/tickets', icon: AlertCircle },
         { name: 'Audit Logs', href: '/admin/audit', icon: Shield },
@@ -88,8 +102,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                                     key={item.name}
                                     onClick={() => router.push(item.href)}
                                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive
-                                            ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
-                                            : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                                        ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                                        : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
                                         }`}
                                 >
                                     <item.icon className="w-5 h-5" />

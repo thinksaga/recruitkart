@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 
 export async function PATCH(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const cookieStore = await cookies();
@@ -23,7 +23,7 @@ export async function PATCH(
             return NextResponse.json({ error: 'Forbidden - Admin or Support access required' }, { status: 403 });
         }
 
-        const { id } = params;
+        const { id } = await params;
         const { verification_status } = await request.json();
 
         if (!['PENDING', 'UNDER_REVIEW', 'VERIFIED', 'REJECTED', 'SUSPENDED', 'BANNED'].includes(verification_status)) {

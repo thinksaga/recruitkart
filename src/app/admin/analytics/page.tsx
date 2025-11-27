@@ -1,30 +1,67 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, TrendingUp, Users, Building2, Briefcase, DollarSign, Calendar } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
+interface AnalyticsData {
+    kpis: {
+        totalUsers: { value: number; growth: number };
+        totalCompanies: { value: number; growth: number };
+        totalJobs: { value: number; growth: number };
+        monthlyRevenue: { value: number; growth: number };
+    };
+    charts: {
+        userGrowth: Array<{ month: string; users: number; companies: number; tas: number }>;
+        jobStats: Array<{ month: string; posted: number; filled: number }>;
+    };
+    metrics: {
+        verificationRate: number;
+        avgTimeToFill: string;
+        successRate: number;
+        totalRevenue: number;
+        totalCandidates: number;
+    };
+}
+
 export default function AdminAnalyticsPage() {
     const router = useRouter();
+    const [data, setData] = useState<AnalyticsData | null>(null);
+    const [loading, setLoading] = useState(true);
 
-    // Mock data - replace with real API data
-    const userGrowthData = [
-        { month: 'Jan', users: 45, companies: 12, tas: 33 },
-        { month: 'Feb', users: 78, companies: 23, tas: 55 },
-        { month: 'Mar', users: 112, companies: 34, tas: 78 },
-        { month: 'Apr', users: 156, companies: 45, tas: 111 },
-        { month: 'May', users: 203, companies: 58, tas: 145 },
-        { month: 'Jun', users: 267, companies: 72, tas: 195 },
-    ];
+    useEffect(() => {
+        fetchAnalytics();
+    }, []);
 
-    const jobStatsData = [
-        { month: 'Jan', posted: 15, filled: 8 },
-        { month: 'Feb', posted: 28, filled: 15 },
-        { month: 'Mar', posted: 42, filled: 24 },
-        { month: 'Apr', posted: 56, filled: 31 },
-        { month: 'May', posted: 73, filled: 45 },
-        { month: 'Jun', posted: 91, filled: 58 },
-    ];
+    const fetchAnalytics = async () => {
+        try {
+            const res = await fetch('/api/admin/analytics');
+            if (!res.ok) {
+                if (res.status === 401 || res.status === 403) {
+                    router.push('/login');
+                }
+                throw new Error('Failed to fetch analytics');
+            }
+            const analyticsData = await res.json();
+            setData(analyticsData);
+        } catch (error) {
+            console.error('Error fetching analytics:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading || !data) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-slate-950">
+                <div className="relative">
+                    <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-emerald-500"></div>
+                    <div className="absolute inset-0 animate-ping rounded-full h-16 w-16 border border-emerald-500/20"></div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-slate-950 text-white p-8">
@@ -46,36 +83,44 @@ export default function AdminAnalyticsPage() {
                     <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
                         <div className="flex items-center justify-between mb-4">
                             <Users className="w-8 h-8 text-blue-500" />
-                            <span className="text-green-500 text-sm font-medium">+23%</span>
+                            <span className={`text-sm font-medium ${data.kpis.totalUsers.growth >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                {data.kpis.totalUsers.growth > 0 ? '+' : ''}{data.kpis.totalUsers.growth}%
+                            </span>
                         </div>
-                        <div className="text-3xl font-bold mb-1">267</div>
+                        <div className="text-3xl font-bold mb-1">{data.kpis.totalUsers.value}</div>
                         <div className="text-sm text-slate-400">Total Users</div>
                     </div>
 
                     <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
                         <div className="flex items-center justify-between mb-4">
                             <Building2 className="w-8 h-8 text-purple-500" />
-                            <span className="text-green-500 text-sm font-medium">+18%</span>
+                            <span className={`text-sm font-medium ${data.kpis.totalCompanies.growth >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                {data.kpis.totalCompanies.growth > 0 ? '+' : ''}{data.kpis.totalCompanies.growth}%
+                            </span>
                         </div>
-                        <div className="text-3xl font-bold mb-1">72</div>
+                        <div className="text-3xl font-bold mb-1">{data.kpis.totalCompanies.value}</div>
                         <div className="text-sm text-slate-400">Companies</div>
                     </div>
 
                     <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
                         <div className="flex items-center justify-between mb-4">
                             <Briefcase className="w-8 h-8 text-emerald-500" />
-                            <span className="text-green-500 text-sm font-medium">+31%</span>
+                            <span className={`text-sm font-medium ${data.kpis.totalJobs.growth >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                {data.kpis.totalJobs.growth > 0 ? '+' : ''}{data.kpis.totalJobs.growth}%
+                            </span>
                         </div>
-                        <div className="text-3xl font-bold mb-1">91</div>
+                        <div className="text-3xl font-bold mb-1">{data.kpis.totalJobs.value}</div>
                         <div className="text-sm text-slate-400">Jobs Posted</div>
                     </div>
 
                     <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
                         <div className="flex items-center justify-between mb-4">
                             <DollarSign className="w-8 h-8 text-yellow-500" />
-                            <span className="text-green-500 text-sm font-medium">+42%</span>
+                            <span className={`text-sm font-medium ${data.kpis.monthlyRevenue.growth >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                {data.kpis.monthlyRevenue.growth > 0 ? '+' : ''}{data.kpis.monthlyRevenue.growth}%
+                            </span>
                         </div>
-                        <div className="text-3xl font-bold mb-1">₹5.2L</div>
+                        <div className="text-3xl font-bold mb-1">₹{(data.kpis.monthlyRevenue.value / 100000).toFixed(1)}L</div>
                         <div className="text-sm text-slate-400">Revenue (MTD)</div>
                     </div>
                 </div>
@@ -86,7 +131,7 @@ export default function AdminAnalyticsPage() {
                     <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
                         <h2 className="text-xl font-bold mb-6">User Growth</h2>
                         <ResponsiveContainer width="100%" height={300}>
-                            <LineChart data={userGrowthData}>
+                            <LineChart data={data.charts.userGrowth}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                                 <XAxis dataKey="month" stroke="#94a3b8" />
                                 <YAxis stroke="#94a3b8" />
@@ -103,7 +148,7 @@ export default function AdminAnalyticsPage() {
                     <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
                         <h2 className="text-xl font-bold mb-6">Job Statistics</h2>
                         <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={jobStatsData}>
+                            <BarChart data={data.charts.jobStats}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                                 <XAxis dataKey="month" stroke="#94a3b8" />
                                 <YAxis stroke="#94a3b8" />
@@ -119,18 +164,22 @@ export default function AdminAnalyticsPage() {
                 {/* Additional Metrics */}
                 <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
                     <h2 className="text-xl font-bold mb-6">Platform Metrics</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                         <div className="border-l-4 border-blue-500 pl-4">
-                            <div className="text-2xl font-bold mb-1">64%</div>
+                            <div className="text-2xl font-bold mb-1">{data.metrics.verificationRate}%</div>
                             <div className="text-sm text-slate-400">Verification Rate</div>
                         </div>
                         <div className="border-l-4 border-emerald-500 pl-4">
-                            <div className="text-2xl font-bold mb-1">3.2 days</div>
+                            <div className="text-2xl font-bold mb-1">{data.metrics.avgTimeToFill} days</div>
                             <div className="text-sm text-slate-400">Avg. Time to Fill</div>
                         </div>
                         <div className="border-l-4 border-purple-500 pl-4">
-                            <div className="text-2xl font-bold mb-1">87%</div>
+                            <div className="text-2xl font-bold mb-1">{data.metrics.successRate}%</div>
                             <div className="text-sm text-slate-400">Success Rate</div>
+                        </div>
+                        <div className="border-l-4 border-yellow-500 pl-4">
+                            <div className="text-2xl font-bold mb-1">{data.metrics.totalCandidates}</div>
+                            <div className="text-sm text-slate-400">Total Candidates</div>
                         </div>
                     </div>
                 </div>
