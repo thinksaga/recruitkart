@@ -44,3 +44,6 @@ next-env.d.ts
 
 docker/
 test-results/
+package-lock.json
+
+prisma/migrations/
