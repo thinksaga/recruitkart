@@ -1,125 +1,86 @@
 # Recruitkart - Development Scripts
 
-This directory contains utility scripts for managing the Recruitkart application.
+This directory contains the database seeding logic. The primary orchestration logic has been consolidated into the root-level `setup.js` script.
 
-## Available Scripts
+## 🛠️ Main Orchestrator (root/setup.js)
 
-### Setup & Build
+We use a single, cross-platform Node.js script to handle the entire application lifecycle. This works on Windows, macOS, and Linux without requiring bash scripts.[1]
 
-#### `./scripts/setup.sh` or `npm run setup`
-Complete setup from scratch:
-- Starts Docker services (PostgreSQL, Redis, MinIO)
-- Installs dependencies
-- Runs database migrations
-- Seeds test data
-- Creates admin users
-- Starts development server
+Location: `../setup.js`
 
-**Usage:**
+| Command | Description |
+|---------|-------------|
+| `node setup.js` | Development Setup: Starts Docker, installs dependencies, migrates DB, seeds test data, and creates admin accounts. |
+| `node setup.js --build` | Production Build: Performs a clean install (`npm ci`), generates the Prisma Client, and builds the Next.js app. |
+| `node setup.js --clean` | Deep Clean: Safe-kills processes, removes Docker containers/volumes, and deletes `node_modules` and build artifacts. | [2]
+
+## 📂 Scripts in this Directory
+
+### seed.ts (Database Seeder)
+
+This script populates the database with rich test data simulating a real-world environment. It is automatically called by `setup.js` during initialization but can be run manually to reset data.[3]
+
+**Command:**
 ```bash
-./scripts/setup.sh
-# or
-npm run setup
+npx tsx scripts/seed.ts
 ```
 
-#### `./scripts/build.sh`
-Build for production:
-- Installs dependencies (production mode)
-- Generates Prisma Client
-- Builds Next.js application
+**What it generates:**
+- Organizations: Acme Corp (Bangalore) & TechFlow (Mumbai).
+- TAS Profiles: Verified recruiters with credit balances and reputation scores.
+- Jobs: Various states (Open, Filled, Closed) with locked Financial Snapshots.
+- Candidates: "No-Resume" profiles with JSON-structured work history and skills.
+- Submissions: Simulates the recruitment funnel (Interviewing, Hired, etc.).
+- Compliance: Creates support tickets and interview feedback records.
 
-**Usage:**
+## 🔐 Default Credentials
+
+The setup process automatically creates these accounts.
+
+### 🛡️ Recruitkart Internal Staff (Ops)
+
+| Role | Email | Password |
+|------|-------|----------|
+| SUPER ADMIN | [admin@recruitkart.com](mailto:admin@recruitkart.com) | `admin@recruitkart2024` |
+| SUPPORT | [support@recruitkart.com](mailto:support@recruitkart.com) | `support@recruitkart2024` |
+| COMPLIANCE | [operator@recruitkart.com](mailto:operator@recruitkart.com) | `operator@recruitkart2024` | [4]
+
+### 🏢 Company Users (Hiring)
+
+| Company | Role | Email | Password |
+|---------|------|-------|----------|
+| Acme Corp | Admin | [admin@acme.com](mailto:admin@acme.com) | `password123` |
+| Acme Corp | Member | [hiring@acme.com](mailto:hiring@acme.com) | `password123` |
+| TechFlow | Admin | [admin@techflow.io](mailto:admin@techflow.io) | `password123` |
+
+### 👥 Talent Acquisition Specialists (TAS)
+
+| Name | Status | Email | Password | Balance |
+|------|--------|-------|----------|---------|
+| Rahul | Verified | [recruiter1@agency.com](mailto:recruiter1@agency.com) | `password123` | 50 |
+| Priya | Verified | [recruiter2@agency.com](mailto:recruiter2@agency.com) | `password123` | 25 |
+| Newbie | Pending | [newbie@agency.com](mailto:newbie@agency.com) | `password123` | 0 | [5]
+
+## ⚡ Quick Database Commands
+
+For day-to-day database management without running the full setup:
+
 ```bash
-./scripts/build.sh
+# View/Edit data in a GUI
+npx prisma studio
+
+# Reset database (Drop all tables & re-seed)
+npx prisma migrate reset
+
+# Push schema changes (Prototyping only)
+npx prisma db push
 ```
 
-#### `./scripts/clean.sh` or `npm run clean`
-Clean everything:
-- Stops running processes
-- Removes build artifacts (.next, out, .turbo)
-- Removes node_modules
-- Removes Prisma generated files
-- Resets database (optional)
-
-**Usage:**
-```bash
-./scripts/clean.sh
-# or
-npm run clean
-```
-
-### Database Management
-
-#### `npm run db:migrate`
-Run database migrations in development mode.
-
-#### `npm run db:seed`
-Seed database with test data:
-- Test Company Inc
-- 3 test users (admin, tas1, tas2)
-- 1 test job
-
-#### `npm run db:reset`
-Reset database (drops all data and re-runs migrations).
-
-#### `npm run db:studio`
-Open Prisma Studio to view/edit database.
-
-### User Management
-
-#### `npm run create:admin`
-Create Recruitkart staff users:
-- admin@recruitkart.com (ADMIN)
-- support@recruitkart.com (SUPPORT)
-- operator@recruitkart.com (OPERATOR)
-
-### Testing
-
-#### `npm run test:api`
-Run API authentication flow tests.
-
-## Quick Start
-
-### First Time Setup
-```bash
-# Clean install and setup
-./scripts/clean.sh
-./scripts/setup.sh
-```
-
-### Daily Development
-```bash
-# Start Docker services
-docker-compose up -d
-
-# Start dev server
-npm run dev
-```
-
-### Reset Everything
-```bash
-# Clean and start fresh
-npm run clean
-npm run setup
-```
-
-## Credentials
-
-### Recruitkart Staff
-- **ADMIN**: admin@recruitkart.com / admin@recruitkart2024
-- **SUPPORT**: support@recruitkart.com / support@recruitkart2024
-- **OPERATOR**: operator@recruitkart.com / operator@recruitkart2024
-
-### Test Users
-- **Company Admin**: admin@test.com / password123
-- **TAS (Verified)**: tas1@test.com / password123
-- **TAS (Pending)**: tas2@test.com / password123
-
-## Environment Variables
-
-Make sure `.env.local` exists with:
-```env
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/recruitkart?schema=public"
-JWT_SECRET="your-secret-key"
-NEXT_PUBLIC_MINIO_URL="http://localhost:9000"
-```
+[1](https://www.markdownguide.org/extended-syntax/)
+[2](https://www.codecademy.com/resources/docs/markdown/tables)
+[3](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/organizing-information-with-tables)
+[4](https://learn.microsoft.com/en-us/azure/devops/project/wiki/markdown-guidance?view=azure-devops)
+[5](https://docs.codeberg.org/markdown/tables-in-markdown/)
+[6](https://about.samarth.ac.in/docs/guides/markdown-syntax-guide)
+[7](https://www.geeksforgeeks.org/html/markdown-tables/)
+[8](https://www.markdownguide.org/cheat-sheet/)

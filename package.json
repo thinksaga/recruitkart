@@ -1,19 +1,19 @@
 {
   "name": "recruitkart_app",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "setup": "./scripts/setup.sh",
-    "clean": "./scripts/clean.sh",
-    "db:migrate": "DATABASE_URL=\"postgresql://postgres:postgres@localhost:5432/recruitkart?schema=public\" npx prisma migrate dev",
-    "db:seed": "DATABASE_URL=\"postgresql://postgres:postgres@localhost:5432/recruitkart?schema=public\" npx tsx scripts/seed.ts",
-    "db:reset": "DATABASE_URL=\"postgresql://postgres:postgres@localhost:5432/recruitkart?schema=public\" npx prisma migrate reset",
-    "db:studio": "DATABASE_URL=\"postgresql://postgres:postgres@localhost:5432/recruitkart?schema=public\" npx prisma studio",
-    "create:admin": "DATABASE_URL=\"postgresql://postgres:postgres@localhost:5432/recruitkart?schema=public\" npx tsx scripts/create-admin.ts",
+    "setup": "node scripts/setup.js",
+    "clean": "node scripts/setup.js --clean",
+    "build:prod": "node scripts/setup.js --build",
+    "db:migrate": "npx prisma migrate dev",
+    "db:seed": "npx tsx scripts/seed.ts",
+    "db:reset": "npx prisma migrate reset",
+    "db:studio": "npx prisma studio",
     "test:api": "npx tsx scripts/test-api.ts"
   },
   "dependencies": {
