@@ -17,7 +17,7 @@ export async function GET() {
         // Check for internal staff roles or COMPANY_ADMIN
         const internalRoles = ['SUPER_ADMIN', 'COMPLIANCE_OFFICER', 'SUPPORT_AGENT', 'OPERATOR', 'FINANCE_CONTROLLER'];
         const allowedRoles = [...internalRoles, 'COMPANY_ADMIN'];
-        
+
         if (!payload || typeof payload.role !== 'string' || !allowedRoles.includes(payload.role)) {
             return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
         }
@@ -41,28 +41,28 @@ export async function GET() {
                 totalSubmissions,
                 recentPayments,
             ] = await Promise.all([
-                prisma.job.count({ 
-                    where: { 
+                prisma.job.count({
+                    where: {
                         organization_id: user.organization_id,
                         status: { in: ['OPEN', 'PRIVATE'] }
-                    } 
+                    }
                 }),
-                prisma.user.count({ 
-                    where: { 
+                prisma.user.count({
+                    where: {
                         organization_id: user.organization_id,
                         role: { in: ['COMPANY_ADMIN', 'COMPANY_MEMBER', 'INTERVIEWER', 'DECISION_MAKER'] }
-                    } 
+                    }
                 }),
-                prisma.submission.count({ 
-                    where: { 
+                prisma.submission.count({
+                    where: {
                         job: { organization_id: user.organization_id },
                         status: 'PENDING_CONSENT'
-                    } 
+                    }
                 }),
-                prisma.submission.count({ 
-                    where: { 
+                prisma.submission.count({
+                    where: {
                         job: { organization_id: user.organization_id }
-                    } 
+                    }
                 }),
                 prisma.paymentRecord.count({
                     where: {

@@ -277,11 +277,10 @@ export default function TeamManagement() {
                                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleBadge(member.role)}`}>
                                                 {member.role.replace('_', ' ')}
                                             </span>
-                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                member.verification_status === 'VERIFIED' ? 'bg-emerald-500/20 text-emerald-400' :
-                                                member.verification_status === 'PENDING' ? 'bg-yellow-500/20 text-yellow-400' :
-                                                'bg-red-500/20 text-red-400'
-                                            }`}>
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${member.verification_status === 'VERIFIED' ? 'bg-emerald-500/20 text-emerald-400' :
+                                                    member.verification_status === 'PENDING' ? 'bg-yellow-500/20 text-yellow-400' :
+                                                        'bg-red-500/20 text-red-400'
+                                                }`}>
                                                 {member.verification_status.replace('_', ' ')}
                                             </span>
                                         </div>

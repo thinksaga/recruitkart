@@ -139,8 +139,8 @@ export default function AdminJobsPage() {
                                             </td>
                                             <td className="py-4 px-6">
                                                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${job.status === 'OPEN' ? 'bg-green-500/10 text-green-500' :
-                                                        job.status === 'FILLED' ? 'bg-blue-500/10 text-blue-500' :
-                                                            'bg-slate-500/10 text-slate-500'
+                                                    job.status === 'FILLED' ? 'bg-blue-500/10 text-blue-500' :
+                                                        'bg-slate-500/10 text-slate-500'
                                                     }`}>
                                                     {job.status}
                                                 </span>

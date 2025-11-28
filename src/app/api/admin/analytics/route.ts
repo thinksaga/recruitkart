@@ -17,7 +17,7 @@ export async function GET() {
         // Check for internal staff roles or COMPANY_ADMIN
         const internalRoles = ['SUPER_ADMIN', 'COMPLIANCE_OFFICER', 'SUPPORT_AGENT', 'OPERATOR', 'FINANCE_CONTROLLER'];
         const allowedRoles = [...internalRoles, 'COMPANY_ADMIN'];
-        
+
         if (!payload || typeof payload.role !== 'string' || !allowedRoles.includes(payload.role)) {
             return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
         }
@@ -29,11 +29,11 @@ export async function GET() {
                 where: { id: payload.userId as string },
                 select: { organization_id: true }
             });
-            
+
             if (!user?.organization_id) {
                 return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
             }
-            
+
             organizationFilter = { organization_id: user.organization_id };
         }
 
@@ -50,14 +50,14 @@ export async function GET() {
         // Fetch all users, organizations, and jobs created in last 6 months
         const [usersData, jobsData, totalRevenue, monthlyRevenue] = await Promise.all([
             prisma.user.findMany({
-                where: { 
+                where: {
                     created_at: { gte: sixMonthsAgo },
                     ...organizationFilter
                 },
                 select: { created_at: true, role: true },
             }),
             prisma.job.findMany({
-                where: { 
+                where: {
                     created_at: { gte: sixMonthsAgo },
                     ...organizationFilter
                 },
@@ -65,7 +65,7 @@ export async function GET() {
             }),
             // Calculate total revenue from infra fees and success fees
             prisma.paymentRecord.aggregate({
-                where: { 
+                where: {
                     status: 'SUCCESS',
                     job: organizationFilter
                 },

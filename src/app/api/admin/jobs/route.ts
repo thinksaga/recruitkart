@@ -17,7 +17,7 @@ export async function GET() {
         // Check for internal staff roles or COMPANY_ADMIN
         const internalRoles = ['SUPER_ADMIN', 'COMPLIANCE_OFFICER', 'SUPPORT_AGENT', 'OPERATOR', 'FINANCE_CONTROLLER'];
         const allowedRoles = [...internalRoles, 'COMPANY_ADMIN'];
-        
+
         if (!payload || typeof payload.role !== 'string' || !allowedRoles.includes(payload.role)) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
@@ -29,11 +29,11 @@ export async function GET() {
                 where: { id: payload.userId as string },
                 select: { organization_id: true }
             });
-            
+
             if (!user?.organization_id) {
                 return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
             }
-            
+
             whereClause = { organization_id: user.organization_id };
         }
 

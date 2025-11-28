@@ -227,21 +227,19 @@ export default function PaymentsPage() {
                 <div className="flex space-x-1 bg-slate-900/50 p-1 rounded-lg border border-slate-800">
                     <button
                         onClick={() => setActiveTab('invoices')}
-                        className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                            activeTab === 'invoices'
+                        className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${activeTab === 'invoices'
                                 ? 'bg-emerald-500 text-white'
                                 : 'text-slate-400 hover:text-white'
-                        }`}
+                            }`}
                     >
                         Invoices
                     </button>
                     <button
                         onClick={() => setActiveTab('payments')}
-                        className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                            activeTab === 'payments'
+                        className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${activeTab === 'payments'
                                 ? 'bg-emerald-500 text-white'
                                 : 'text-slate-400 hover:text-white'
-                        }`}
+                            }`}
                     >
                         Payment Records
                     </button>

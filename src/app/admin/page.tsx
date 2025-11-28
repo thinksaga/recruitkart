@@ -142,7 +142,7 @@ export default function AdminDashboard() {
                 throw new Error('Failed to fetch stats');
             }
             const data = await res.json();
-            
+
             if (currentUser?.role === 'COMPANY_ADMIN') {
                 setCompanyStats(data.stats);
                 setRecentSubmissions(data.recentSubmissions || []);
@@ -372,19 +372,19 @@ export default function AdminDashboard() {
                         animate={{ opacity: 1, x: 0 }}
                     >
                         <h1 className="text-3xl font-bold text-white mb-1">
-                            {currentUser?.role === 'SUPPORT_AGENT' 
-                                ? 'Support Dashboard' 
+                            {currentUser?.role === 'SUPPORT_AGENT'
+                                ? 'Support Dashboard'
                                 : currentUser?.role === 'COMPANY_ADMIN'
-                                ? 'Company Dashboard'
-                                : 'Dashboard Overview'
+                                    ? 'Company Dashboard'
+                                    : 'Dashboard Overview'
                             }
                         </h1>
                         <p className="text-slate-400">
                             {currentUser?.role === 'SUPPORT_AGENT'
                                 ? 'Manage support tickets and help users'
                                 : currentUser?.role === 'COMPANY_ADMIN'
-                                ? 'Manage your jobs, team, and hiring process'
-                                : new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+                                    ? 'Manage your jobs, team, and hiring process'
+                                    : new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
                             }
                         </p>
                     </motion.div>
@@ -503,14 +503,14 @@ export default function AdminDashboard() {
                                             <div className="flex items-center gap-3 mb-2">
                                                 <span className="text-sm font-medium text-slate-300">#{ticket.ticket_number}</span>
                                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${ticket.priority === 'HIGH' ? 'bg-red-500/20 text-red-400' :
-                                                        ticket.priority === 'MEDIUM' ? 'bg-yellow-500/20 text-yellow-400' :
-                                                            'bg-green-500/20 text-green-400'
+                                                    ticket.priority === 'MEDIUM' ? 'bg-yellow-500/20 text-yellow-400' :
+                                                        'bg-green-500/20 text-green-400'
                                                     }`}>
                                                     {ticket.priority}
                                                 </span>
                                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${ticket.status === 'OPEN' ? 'bg-red-500/20 text-red-400' :
-                                                        ticket.status === 'IN_PROGRESS' ? 'bg-blue-500/20 text-blue-400' :
-                                                            'bg-green-500/20 text-green-400'
+                                                    ticket.status === 'IN_PROGRESS' ? 'bg-blue-500/20 text-blue-400' :
+                                                        'bg-green-500/20 text-green-400'
                                                     }`}>
                                                     {ticket.status.replace('_', ' ')}
                                                 </span>
@@ -554,15 +554,14 @@ export default function AdminDashboard() {
                                     <div key={submission.id} className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg border border-slate-700/50">
                                         <div className="flex-1">
                                             <div className="flex items-center gap-3 mb-2">
-                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                    submission.status === 'PENDING_CONSENT' ? 'bg-yellow-500/20 text-yellow-400' :
-                                                    submission.status === 'ACTIVE' ? 'bg-blue-500/20 text-blue-400' :
-                                                    submission.status === 'SCREENING' ? 'bg-purple-500/20 text-purple-400' :
-                                                    submission.status === 'INTERVIEWING' ? 'bg-orange-500/20 text-orange-400' :
-                                                    submission.status === 'OFFER_EXTENDED' ? 'bg-emerald-500/20 text-emerald-400' :
-                                                    submission.status === 'HIRED' ? 'bg-green-500/20 text-green-400' :
-                                                    'bg-red-500/20 text-red-400'
-                                                }`}>
+                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${submission.status === 'PENDING_CONSENT' ? 'bg-yellow-500/20 text-yellow-400' :
+                                                        submission.status === 'ACTIVE' ? 'bg-blue-500/20 text-blue-400' :
+                                                            submission.status === 'SCREENING' ? 'bg-purple-500/20 text-purple-400' :
+                                                                submission.status === 'INTERVIEWING' ? 'bg-orange-500/20 text-orange-400' :
+                                                                    submission.status === 'OFFER_EXTENDED' ? 'bg-emerald-500/20 text-emerald-400' :
+                                                                        submission.status === 'HIRED' ? 'bg-green-500/20 text-green-400' :
+                                                                            'bg-red-500/20 text-red-400'
+                                                    }`}>
                                                     {submission.status.replace('_', ' ')}
                                                 </span>
                                             </div>
