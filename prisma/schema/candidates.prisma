@@ -1,0 +1,28 @@
+model Candidate {
+  id            String  @id @default(uuid())
+  user_id       String? @unique
+  user          User?   @relation(fields: [user_id], references: [id])
+  phone         String  @unique
+  email         String  @unique
+  full_name     String
+  identity_hash String? // For fuzzy deduplication
+
+  // Structured Data (Replacing generic JSON)
+  personal_details  Json? // { current_location, preferred_locations, notice_period, ctc... }
+  work_history      Json? // Array of { company, role, start, end, description... }
+  education_history Json? // Array of { institution, degree, year... }
+  social_links      Json? // { linkedin, github, portfolio... }
+
+  // Search Optimization
+  skills_primary   String[] // Top 5 skills for indexing
+  skills_secondary String[] // All other tags
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relations
+  submissions Submission[]
+
+  // Index for fast skill search
+  @@index([skills_primary])
+}

@@ -1,0 +1,66 @@
+enum UserRole {
+  ADMIN
+  SUPPORT
+  OPERATOR
+  TAS
+  CANDIDATE
+  // Company Roles
+  COMPANY_ADMIN
+  COMPANY_MEMBER
+  INTERVIEWER
+  DECISION_MAKER
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum JobStatus {
+  DRAFT
+  OPEN
+  PRIVATE
+  CLOSED
+  FILLED
+}
+
+enum SubmissionStatus {
+  PENDING_CONSENT
+  LOCKED
+  ACTIVE
+  REJECTED_BY_CANDIDATE
+  EXPIRED
+  INTERVIEWING
+  HIRED
+}
+
+enum EscrowStatus {
+  HELD
+  RELEASED_TO_TAS
+  REFUNDED_TO_COMPANY
+  DISPUTED
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum InterviewOutcome {
+  PASSED
+  REJECTED
+  NEXT_ROUND_NEEDED
+  PENDING_DECISION
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+}
+
+enum TicketStatus {
+  OPEN
+  RESOLVED
+}

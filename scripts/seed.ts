@@ -1,109 +1,182 @@
-import prisma from '../src/lib/prisma';
-import * as bcrypt from 'bcryptjs';
-import { UserRole, JobStatus, SubmissionStatus } from '@prisma/client';
+import { PrismaClient, UserRole, JobStatus, SubmissionStatus } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+
+const prisma = new PrismaClient();
 
 async function main() {
-    console.log('🌱 Seeding database...\n');
+    console.log('🌱 Starting seed...');
 
-    const hashedPassword = await bcrypt.hash('password123', 10);
+    // 1. Clean up existing data
+    await prisma.submission.deleteMany();
+    await prisma.interview.deleteMany();
+    await prisma.job.deleteMany();
+    await prisma.candidate.deleteMany();
+    await prisma.tASProfile.deleteMany();
+    await prisma.organization.deleteMany();
+    await prisma.user.deleteMany();
 
-    // 1. Create Organization
-    const org = await prisma.organization.upsert({
-        where: { id: 'test-org-1' },
-        update: {},
-        create: {
-            id: 'test-org-1',
-            name: 'Test Company Inc',
-            gstin: '29ABCDE1234F1Z5',
-            domain: 'testcompany.com',
-            website: 'https://testcompany.com',
-        }
+    const passwordHash = await bcrypt.hash('password123', 10);
+
+    // 2. Create Platform Admin
+    const adminUser = await prisma.user.create({
+        data: {
+            email: 'admin@recruitkart.com',
+            password_hash: passwordHash,
+            role: UserRole.ADMIN,
+            verification_status: 'VERIFIED',
+        },
     });
-    console.log(`✅ Organization: ${org.name}`);
+    console.log('✅ Created Admin:', adminUser.email);
 
-    // 2. Create Company Admin
-    const admin = await prisma.user.upsert({
-        where: { email: 'admin@test.com' },
-        update: {},
-        create: {
-            email: 'admin@test.com',
-            password_hash: hashedPassword,
+    // 2.1 Create Support User
+    const supportUser = await prisma.user.create({
+        data: {
+            email: 'support@recruitkart.com',
+            password_hash: passwordHash,
+            role: UserRole.SUPPORT,
+            verification_status: 'VERIFIED',
+        },
+    });
+    console.log('✅ Created Support:', supportUser.email);
+
+    // 2.2 Create Operator User
+    const operatorUser = await prisma.user.create({
+        data: {
+            email: 'operator@recruitkart.com',
+            password_hash: passwordHash,
+            role: UserRole.OPERATOR,
+            verification_status: 'VERIFIED',
+        },
+    });
+    console.log('✅ Created Operator:', operatorUser.email);
+
+    // 3. Create Company & Company Admin
+    const org = await prisma.organization.create({
+        data: {
+            name: 'Acme Corp',
+            domain: 'acme.com',
+            website: 'https://acme.com',
+        },
+    });
+
+    const companyUser = await prisma.user.create({
+        data: {
+            email: 'hr@acme.com',
+            password_hash: passwordHash,
             role: UserRole.COMPANY_ADMIN,
             verification_status: 'VERIFIED',
             organization_id: org.id,
-        }
+        },
     });
-    console.log(`✅ Admin: ${admin.email}`);
+    console.log('✅ Created Company:', org.name);
 
-    // 3. Create TAS users
-    const tas1 = await prisma.user.upsert({
-        where: { email: 'tas1@test.com' },
-        update: {},
-        create: {
-            email: 'tas1@test.com',
-            password_hash: hashedPassword,
+    // 3.1 Create Company Member
+    const companyMember = await prisma.user.create({
+        data: {
+            email: 'member@acme.com',
+            password_hash: passwordHash,
+            role: UserRole.COMPANY_MEMBER,
+            verification_status: 'VERIFIED',
+            organization_id: org.id,
+        },
+    });
+    console.log('✅ Created Company Member:', companyMember.email);
+
+    // 3.2 Create Interviewer
+    const interviewer = await prisma.user.create({
+        data: {
+            email: 'interviewer@acme.com',
+            password_hash: passwordHash,
+            role: UserRole.INTERVIEWER,
+            verification_status: 'VERIFIED',
+            organization_id: org.id,
+        },
+    });
+    console.log('✅ Created Interviewer:', interviewer.email);
+
+    // 3.3 Create Decision Maker
+    const decisionMaker = await prisma.user.create({
+        data: {
+            email: 'decision@acme.com',
+            password_hash: passwordHash,
+            role: UserRole.DECISION_MAKER,
+            verification_status: 'VERIFIED',
+            organization_id: org.id,
+        },
+    });
+    console.log('✅ Created Decision Maker:', decisionMaker.email);
+
+    // 4. Create TAS (Agency)
+    const tasUser = await prisma.user.create({
+        data: {
+            email: 'agency@tas.com',
+            password_hash: passwordHash,
             role: UserRole.TAS,
             verification_status: 'VERIFIED',
-        }
+        },
     });
 
-    await prisma.tASProfile.upsert({
-        where: { user_id: tas1.id },
-        update: {},
-        create: {
-            user_id: tas1.id,
+    const tasProfile = await prisma.tASProfile.create({
+        data: {
+            user_id: tasUser.id,
             pan_number: 'ABCDE1234F',
-            linkedin_url: 'https://linkedin.com/in/tas1',
-            credits_balance: 10,
-        }
+            credits_balance: 100,
+        },
     });
-    console.log(`✅ TAS (Verified): ${tas1.email}`);
+    console.log('✅ Created TAS:', tasUser.email);
 
-    const tas2 = await prisma.user.upsert({
-        where: { email: 'tas2@test.com' },
-        update: {},
-        create: {
-            email: 'tas2@test.com',
-            password_hash: hashedPassword,
-            role: UserRole.TAS,
-            verification_status: 'PENDING',
-        }
+    // 5. Create Candidate (Linked to User)
+    const candidateUser = await prisma.user.create({
+        data: {
+            email: 'john@doe.com',
+            password_hash: passwordHash,
+            role: UserRole.CANDIDATE,
+            verification_status: 'VERIFIED',
+        },
     });
 
-    await prisma.tASProfile.upsert({
-        where: { user_id: tas2.id },
-        update: {},
-        create: {
-            user_id: tas2.id,
-            pan_number: 'BCDEF5678G',
-            credits_balance: 5,
-        }
+    const candidate = await prisma.candidate.create({
+        data: {
+            user_id: candidateUser.id,
+            full_name: 'John Doe',
+            email: 'john@doe.com',
+            phone: '+919876543210',
+            skills_primary: ['React', 'Node.js', 'TypeScript'],
+            personal_details: {
+                current_location: 'Bangalore',
+                notice_period: 'IMMEDIATE',
+            },
+        },
     });
-    console.log(`✅ TAS (Pending): ${tas2.email}`);
+    console.log('✅ Created Candidate:', candidate.full_name);
 
-    // 4. Create Jobs
-    const job1 = await prisma.job.upsert({
-        where: { id: 'test-job-1' },
-        update: {},
-        create: {
-            id: 'test-job-1',
+    // 6. Create a Job
+    const job = await prisma.job.create({
+        data: {
             organization_id: org.id,
-            title: 'Senior Full Stack Engineer',
-            description: 'Looking for experienced full stack developers',
-            salary_min: 120000,
-            salary_max: 180000,
+            title: 'Senior Frontend Engineer',
+            description: 'We are looking for a React expert.',
+            salary_min: 2000000,
+            salary_max: 3500000,
             status: JobStatus.OPEN,
+            success_fee_amount: 50000,
             infra_fee_paid: true,
-            success_fee_amount: 15000,
-        }
+        },
     });
-    console.log(`✅ Job: ${job1.title}`);
+    console.log('✅ Created Job:', job.title);
 
-    console.log('\n🎉 Seeding complete!');
-    console.log('\n🔐 Test Credentials (password: password123):');
-    console.log('  - admin@test.com (Company Admin, Verified)');
-    console.log('  - tas1@test.com (TAS, Verified)');
-    console.log('  - tas2@test.com (TAS, Pending)\n');
+    // 7. Create a Submission (TAS submits Candidate to Job)
+    const submission = await prisma.submission.create({
+        data: {
+            job_id: job.id,
+            tas_id: tasProfile.id,
+            candidate_id: candidate.id,
+            status: SubmissionStatus.PENDING_CONSENT,
+        },
+    });
+    console.log('✅ Created Submission:', submission.id);
+
+    console.log('🎉 Seed completed successfully!');
 }
 
 main()

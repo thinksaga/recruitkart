@@ -1,0 +1,37 @@
+model Submission {
+  id           String           @id @default(uuid())
+  job_id       String
+  tas_id       String
+  candidate_id String
+  status       SubmissionStatus @default(PENDING_CONSENT)
+  locked_until DateTime?
+  created_at   DateTime         @default(now())
+  updated_at   DateTime         @updatedAt
+
+  // Relations
+  job        Job         @relation(fields: [job_id], references: [id])
+  tas        TASProfile  @relation(fields: [tas_id], references: [id])
+  candidate  Candidate   @relation(fields: [candidate_id], references: [id])
+  interviews Interview[]
+
+  // Constraint: A candidate can be submitted to a job only once
+  @@unique([job_id, candidate_id])
+}
+
+model Interview {
+  id              String           @id @default(uuid())
+  submission_id   String
+  round_number    Int              @default(1)
+  round_type      String // e.g., "Technical", "HR", "Coding"
+  status          InterviewStatus  @default(SCHEDULED)
+  outcome         InterviewOutcome @default(PENDING_DECISION)
+  feedback_json   Json? // JSONB for scorecard
+  zoom_meeting_id String?
+  recording_url   String?
+  scheduled_at    DateTime?
+  created_at      DateTime         @default(now())
+  updated_at      DateTime         @updatedAt
+
+  // Relations
+  submission Submission @relation(fields: [submission_id], references: [id])
+}

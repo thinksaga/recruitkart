@@ -49,12 +49,24 @@ export default function LoginPage() {
             const userRole = responseData.user?.role;
 
             // Redirect based on role
-            if (['ADMIN', 'SUPPORT', 'OPERATOR'].includes(userRole)) {
+            if (userRole === 'ADMIN') {
                 router.push('/admin');
+            } else if (userRole === 'OPERATOR') {
+                router.push('/operator');
+            } else if (userRole === 'SUPPORT') {
+                router.push('/support');
             } else if (userRole === 'COMPANY_ADMIN') {
                 router.push('/dashboard/company');
+            } else if (userRole === 'COMPANY_MEMBER') {
+                router.push('/dashboard/member');
+            } else if (userRole === 'INTERVIEWER') {
+                router.push('/dashboard/interviewer');
+            } else if (userRole === 'DECISION_MAKER') {
+                router.push('/dashboard/decision-maker');
             } else if (userRole === 'TAS') {
-                router.push('/dashboard/tas');
+                router.push('/tas');
+            } else if (userRole === 'CANDIDATE') {
+                router.push('/candidate');
             } else {
                 router.push('/dashboard');
             }

@@ -1,0 +1,14 @@
+model Ticket {
+  id              String       @id @default(uuid())
+  raised_by_id    String
+  related_job_id  String?
+  reason          String
+  status          TicketStatus @default(OPEN)
+  resolution_note String?
+  created_at      DateTime     @default(now())
+  updated_at      DateTime     @updatedAt
+
+  // Relations
+  raised_by   User @relation(fields: [raised_by_id], references: [id])
+  related_job Job? @relation(fields: [related_job_id], references: [id])
+}
