@@ -176,7 +176,33 @@ async function main() {
     });
     console.log('✅ Created Submission:', submission.id);
 
-    console.log('🎉 Seed completed successfully!');
+    // Create Financial Controller
+    const financialController = await prisma.user.upsert({
+        where: { email: 'finance@recruitkart.com' },
+        update: {},
+        create: {
+            email: 'finance@recruitkart.com',
+            role: UserRole.FINANCIAL_CONTROLLER,
+            password_hash: passwordHash,
+            verification_status: 'VERIFIED',
+        },
+    });
+    console.log('Created Financial Controller:', financialController.email);
+
+    // Create Compliance Officer
+    const complianceOfficer = await prisma.user.upsert({
+        where: { email: 'compliance@recruitkart.com' },
+        update: {},
+        create: {
+            email: 'compliance@recruitkart.com',
+            role: UserRole.COMPLIANCE_OFFICER,
+            password_hash: passwordHash,
+            verification_status: 'VERIFIED',
+        },
+    });
+    console.log('Created Compliance Officer:', complianceOfficer.email);
+
+    console.log('Seeding completed successfully');
 }
 
 main()
