@@ -145,7 +145,62 @@ async function main() {
             personal_details: {
                 current_location: 'Bangalore',
                 notice_period: 'IMMEDIATE',
+                ctc: '2500000',
+                expected_ctc: '3500000',
             },
+            summary: 'Experienced Full Stack Developer with a focus on React and Node.js ecosystem.',
+            years_of_experience: 5.5,
+            experience: {
+                create: [
+                    {
+                        company: 'Tech Solutions Inc',
+                        role: 'Senior Frontend Engineer',
+                        location: 'Bangalore',
+                        start_date: new Date('2022-01-01'),
+                        is_current: true,
+                        description: 'Leading the frontend team and migrating legacy app to Next.js.',
+                        skills_used: ['React', 'Next.js', 'TypeScript', 'TailwindCSS'],
+                    },
+                    {
+                        company: 'WebCorp',
+                        role: 'Software Engineer',
+                        location: 'Hyderabad',
+                        start_date: new Date('2019-06-01'),
+                        end_date: new Date('2021-12-31'),
+                        is_current: false,
+                        description: 'Developed scalable web applications using MERN stack.',
+                        skills_used: ['MongoDB', 'Express', 'React', 'Node.js'],
+                    }
+                ]
+            },
+            education: {
+                create: [
+                    {
+                        institution: 'IIT Madras',
+                        degree: 'B.Tech',
+                        field_of_study: 'Computer Science',
+                        start_date: new Date('2015-08-01'),
+                        end_date: new Date('2019-05-01'),
+                        grade: '8.5 CGPA',
+                    }
+                ]
+            },
+            projects: {
+                create: [
+                    {
+                        title: 'E-commerce Platform',
+                        description: 'Built a full-featured e-commerce platform with payment gateway integration.',
+                        url: 'https://github.com/johndoe/ecommerce',
+                        skills_used: ['React', 'Stripe', 'Node.js'],
+                    }
+                ]
+            },
+            languages: {
+                create: [
+                    { language: 'English', proficiency: 'Professional' },
+                    { language: 'Hindi', proficiency: 'Native' }
+                ]
+            }
         },
     });
     console.log('✅ Created Candidate:', candidate.full_name);

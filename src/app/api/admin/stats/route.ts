@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { cache } from '@/lib/cache';
 import { verifyJWT } from '@/lib/auth';
 import { cookies } from 'next/headers';
 
@@ -15,8 +16,15 @@ export async function GET() {
         const payload = await verifyJWT(token);
 
         // Check if user is ADMIN, SUPPORT, or OPERATOR
-        if (!['ADMIN', 'SUPPORT', 'OPERATOR'].includes(payload.role)) {
+        if (!payload || typeof payload.role !== 'string' || !['ADMIN', 'SUPPORT', 'OPERATOR'].includes(payload.role)) {
             return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
+        }
+
+        const cacheKey = 'admin:dashboard:stats';
+        const cachedStats = await cache.get(cacheKey);
+
+        if (cachedStats) {
+            return NextResponse.json(cachedStats);
         }
 
         // Get dashboard statistics
@@ -56,7 +64,7 @@ export async function GET() {
             },
         });
 
-        return NextResponse.json({
+        const responseData = {
             stats: {
                 totalUsers,
                 pendingUsers,
@@ -67,7 +75,11 @@ export async function GET() {
                 openJobs,
             },
             recentUsers,
-        });
+        };
+
+        await cache.set(cacheKey, responseData, 60); // Cache for 1 minute
+
+        return NextResponse.json(responseData);
     } catch (error) {
         console.error('Admin stats error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
