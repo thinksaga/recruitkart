@@ -172,19 +172,28 @@ export default function TASCreditsPage() {
 
                             <div className="space-y-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-400 mb-2">Select Amount</label>
-                                    <div className="grid grid-cols-3 gap-3">
+                                    <label className="block text-sm font-medium text-slate-400 mb-2">Enter Amount (Min. 100)</label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            min="100"
+                                            value={buyAmount}
+                                            onChange={(e) => setBuyAmount(Math.max(0, parseInt(e.target.value) || 0))}
+                                            className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
+                                            placeholder="Enter amount..."
+                                        />
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">
+                                            Credits
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2 mt-3">
                                         {[100, 500, 1000].map((amount) => (
                                             <button
                                                 key={amount}
                                                 onClick={() => setBuyAmount(amount)}
-                                                className={`p-3 rounded-lg border text-center transition-all ${buyAmount === amount
-                                                        ? 'bg-orange-500/10 border-orange-500 text-orange-500'
-                                                        : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-600'
-                                                    }`}
+                                                className="px-3 py-1 text-xs rounded-full bg-slate-800 border border-slate-700 text-slate-400 hover:text-white hover:border-slate-600 transition-colors"
                                             >
-                                                <div className="text-lg font-bold">{amount}</div>
-                                                <div className="text-xs opacity-70">Credits</div>
+                                                {amount}
                                             </button>
                                         ))}
                                     </div>
@@ -203,7 +212,7 @@ export default function TASCreditsPage() {
 
                                 <button
                                     onClick={handleBuyCredits}
-                                    disabled={isProcessing}
+                                    disabled={isProcessing || buyAmount < 100}
                                     className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 >
                                     {isProcessing ? (

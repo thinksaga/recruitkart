@@ -105,6 +105,7 @@ export default function Pricing() {
                                     <HelpCircle className="w-4 h-4 text-slate-400" />
                                     When do I get paid?
                                 </h4>
+                                <p className="text-gray-600">&quot;Recruitkart has transformed how we hire. The transparency and speed are unmatched.&quot;</p>
                                 <p className="text-slate-400 text-sm">Funds are automatically released from the Escrow Smart Contract on Day 91 of the candidate's tenure at the company.</p>
                             </div>
                         </div>

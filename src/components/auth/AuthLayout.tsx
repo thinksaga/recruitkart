@@ -33,6 +33,7 @@ export default function AuthLayout({ children, title, subtitle }: AuthLayoutProp
                         <div>
                             <div className="font-semibold">John Doe</div>
                             <div className="text-sm text-slate-400">CTO at FinTech Corp</div>
+                            <p className="text-xl text-blue-100">&quot;The most transparent recruitment platform I&apos;ve ever used.&quot;</p>
                         </div>
                     </div>
                 </div>

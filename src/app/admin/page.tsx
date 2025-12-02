@@ -52,8 +52,11 @@ export default function AdminDashboard() {
             if (!res.ok) {
                 if (res.status === 401 || res.status === 403) {
                     router.push('/login');
+                    return;
                 }
-                throw new Error('Failed to fetch stats');
+                const errorText = await res.text();
+                console.error('Failed to fetch stats:', res.status, errorText);
+                throw new Error(`Failed to fetch stats: ${res.status} ${errorText}`);
             }
             const data = await res.json();
             setStats(data.stats);

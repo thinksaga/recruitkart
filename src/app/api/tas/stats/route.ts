@@ -6,9 +6,12 @@ import { cookies } from 'next/headers';
 export async function GET() {
     try {
         const cookieStore = await cookies();
+        const allCookies = cookieStore.getAll();
+        console.log('TAS Stats API: All cookies:', allCookies.map(c => c.name));
         const token = cookieStore.get('token')?.value;
 
         if (!token) {
+            console.log('TAS Stats API: No token found');
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 

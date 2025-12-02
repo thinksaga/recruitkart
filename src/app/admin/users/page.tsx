@@ -11,7 +11,12 @@ import {
     Filter,
     ArrowLeft,
     Building2,
-    User
+    User,
+    Plus,
+    Edit,
+    Trash2,
+    X,
+    Loader2
 } from 'lucide-react';
 
 interface User {
@@ -42,6 +47,112 @@ export default function AdminUsersPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('ALL');
     const [roleFilter, setRoleFilter] = useState('ALL');
+
+    // Modal State
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalMode, setModalMode] = useState<'CREATE' | 'EDIT'>('CREATE');
+    const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    const [formData, setFormData] = useState({
+        email: '',
+        password: '',
+        role: 'SUPPORT',
+        name: ''
+    });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleCreateUser = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        try {
+            const res = await fetch('/api/admin/users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData),
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || 'Failed to create user');
+            }
+
+            setIsModalOpen(false);
+            fetchUsers();
+            resetForm();
+        } catch (error: any) {
+            console.error('Error creating user:', error);
+            alert(error.message);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleUpdateUser = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedUser) return;
+        setIsSubmitting(true);
+        try {
+            const res = await fetch(`/api/admin/users/${selectedUser.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ role: formData.role }),
+            });
+
+            if (!res.ok) throw new Error('Failed to update user');
+
+            setIsModalOpen(false);
+            fetchUsers();
+            resetForm();
+        } catch (error) {
+            console.error('Error updating user:', error);
+            alert('Failed to update user');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleDeleteUser = async (userId: string) => {
+        if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
+        try {
+            const res = await fetch(`/api/admin/users/${userId}`, {
+                method: 'DELETE',
+            });
+
+            if (!res.ok) throw new Error('Failed to delete user');
+
+            fetchUsers();
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            alert('Failed to delete user');
+        }
+    };
+
+    const openCreateModal = () => {
+        setModalMode('CREATE');
+        resetForm();
+        setIsModalOpen(true);
+    };
+
+    const openEditModal = (user: User) => {
+        setModalMode('EDIT');
+        setSelectedUser(user);
+        setFormData({
+            email: user.email,
+            password: '',
+            role: user.role,
+            name: ''
+        });
+        setIsModalOpen(true);
+    };
+
+    const resetForm = () => {
+        setFormData({
+            email: '',
+            password: '',
+            role: 'SUPPORT',
+            name: ''
+        });
+        setSelectedUser(null);
+    };
 
     useEffect(() => {
         fetchUsers();
@@ -120,16 +231,25 @@ export default function AdminUsersPage() {
         <div className="min-h-screen bg-slate-950 text-white p-8">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
-                <div className="mb-8">
+                <div className="mb-8 flex items-center justify-between">
+                    <div>
+                        <button
+                            onClick={() => router.push('/admin')}
+                            className="flex items-center gap-2 text-slate-400 hover:text-white mb-4"
+                        >
+                            <ArrowLeft className="w-4 h-4" />
+                            Back to Dashboard
+                        </button>
+                        <h1 className="text-4xl font-bold mb-2">User Management</h1>
+                        <p className="text-slate-400">View and manage all platform users</p>
+                    </div>
                     <button
-                        onClick={() => router.push('/admin')}
-                        className="flex items-center gap-2 text-slate-400 hover:text-white mb-4"
+                        onClick={openCreateModal}
+                        className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors font-medium"
                     >
-                        <ArrowLeft className="w-4 h-4" />
-                        Back to Dashboard
+                        <Plus className="w-4 h-4" />
+                        Create User
                     </button>
-                    <h1 className="text-4xl font-bold mb-2">User Management</h1>
-                    <p className="text-slate-400">View and manage all platform users</p>
                 </div>
 
                 {/* Filters */}
@@ -292,6 +412,20 @@ export default function AdminUsersPage() {
                                                         Reject
                                                     </button>
                                                 )}
+                                                <button
+                                                    onClick={() => openEditModal(user)}
+                                                    className="p-1 text-slate-400 hover:text-white transition-colors"
+                                                    title="Edit Role"
+                                                >
+                                                    <Edit className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteUser(user.id)}
+                                                    className="p-1 text-slate-400 hover:text-red-500 transition-colors"
+                                                    title="Delete User"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -301,6 +435,83 @@ export default function AdminUsersPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Create/Edit Modal */}
+            {isModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 w-full max-w-md shadow-2xl">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-xl font-bold text-white">
+                                {modalMode === 'CREATE' ? 'Create New User' : 'Edit User'}
+                            </h3>
+                            <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={modalMode === 'CREATE' ? handleCreateUser : handleUpdateUser} className="space-y-4">
+                            {modalMode === 'CREATE' && (
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-400 mb-1">Email</label>
+                                    <input
+                                        type="email"
+                                        required
+                                        value={formData.email}
+                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                        className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                    />
+                                </div>
+                            )}
+
+                            {modalMode === 'CREATE' && (
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-400 mb-1">Password</label>
+                                    <input
+                                        type="password"
+                                        required
+                                        minLength={6}
+                                        value={formData.password}
+                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                        className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                    />
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-1">Role</label>
+                                <select
+                                    value={formData.role}
+                                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                >
+                                    <option value="SUPPORT">Support</option>
+                                    <option value="OPERATOR">Operator</option>
+                                    <option value="FINANCIAL_CONTROLLER">Financial Controller</option>
+                                    <option value="COMPLIANCE_OFFICER">Compliance Officer</option>
+                                    <option value="ADMIN">Admin</option>
+                                    <option value="TAS">TAS</option>
+                                    <option value="COMPANY_ADMIN">Company Admin</option>
+                                </select>
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="w-full py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        Processing...
+                                    </>
+                                ) : (
+                                    modalMode === 'CREATE' ? 'Create User' : 'Update User'
+                                )}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

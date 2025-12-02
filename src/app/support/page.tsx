@@ -79,6 +79,7 @@ export default function SupportDashboard() {
                 className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800/50 backdrop-blur-sm"
             >
                 <h2 className="text-xl font-bold text-white mb-6">Recent Tickets</h2>
+                <p className="text-gray-600 mb-6">Can&apos;t find what you&apos;re looking for? Create a support ticket.</p>
                 {recentTickets.length === 0 ? (
                     <div className="text-center py-12 text-slate-500">
                         <Ticket className="w-12 h-12 mx-auto mb-4 opacity-50" />
@@ -90,8 +91,8 @@ export default function SupportDashboard() {
                             <div key={ticket.id} className="flex items-center justify-between p-4 bg-slate-800/30 rounded-xl border border-slate-800/50">
                                 <div className="flex items-center gap-4">
                                     <div className={`p-2 rounded-lg ${ticket.status === 'OPEN' ? 'bg-blue-500/10 text-blue-500' :
-                                            ticket.status === 'RESOLVED' ? 'bg-emerald-500/10 text-emerald-500' :
-                                                'bg-slate-500/10 text-slate-500'
+                                        ticket.status === 'RESOLVED' ? 'bg-emerald-500/10 text-emerald-500' :
+                                            'bg-slate-500/10 text-slate-500'
                                         }`}>
                                         <Ticket className="w-5 h-5" />
                                     </div>
@@ -102,8 +103,8 @@ export default function SupportDashboard() {
                                 </div>
                                 <div className="text-right">
                                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${ticket.status === 'OPEN' ? 'bg-blue-500/10 text-blue-500' :
-                                            ticket.status === 'RESOLVED' ? 'bg-emerald-500/10 text-emerald-500' :
-                                                'bg-slate-500/10 text-slate-500'
+                                        ticket.status === 'RESOLVED' ? 'bg-emerald-500/10 text-emerald-500' :
+                                            'bg-slate-500/10 text-slate-500'
                                         }`}>
                                         {ticket.status}
                                     </span>

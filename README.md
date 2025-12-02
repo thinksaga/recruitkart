@@ -5,7 +5,7 @@ A modern, full-stack recruitment platform built with Next.js 14, featuring role-
 ## 🚀 Features
 
 ### Multi-Role Architecture
-- **10 Role-Specific Dashboards** with unique themes and features
+- **11 Role-Specific Dashboards** with unique themes and features
 - **Platform Admin**: System-wide management and analytics
 - **Support**: Ticket management and user assistance
 - **Operator**: Platform operations and monitoring
@@ -15,6 +15,8 @@ A modern, full-stack recruitment platform built with Next.js 14, featuring role-
 - **Decision Maker**: Executive approvals and analytics
 - **TAS (Talent Acquisition Specialist)**: Candidate bank and submissions
 - **Candidate**: Job applications and profile management
+- **Financial Controller**: Payouts, invoices, and escrow management
+- **Compliance Officer**: Verifications, audits, and reports
 
 ### Core Functionality
 - 🔐 **JWT-based Authentication** with role-based access control
@@ -158,6 +160,8 @@ All users have the password: `password123`
 | Decision Maker | decision@acme.com | `/dashboard/decision-maker` |
 | TAS | agency@tas.com | `/tas` |
 | Candidate | john@doe.com | `/candidate` |
+| Financial Controller | finance@recruitkart.com | `/dashboard/finance` |
+| Compliance Officer | compliance@recruitkart.com | `/dashboard/compliance` |
 
 ## 📜 Available Scripts
 

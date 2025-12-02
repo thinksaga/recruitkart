@@ -97,13 +97,13 @@ export default function AdminSubmissionsPage() {
                                                 <div className="text-sm text-slate-400">{sub.job.organization.name}</div>
                                             </td>
                                             <td className="py-4 px-6 text-slate-400">
-                                                {sub.tas_profile.user.email}
+                                                {sub.tas?.user?.email || 'N/A'}
                                             </td>
                                             <td className="py-4 px-6">
                                                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${sub.status === 'HIRED' ? 'bg-emerald-500/10 text-emerald-500' :
-                                                        sub.status === 'REJECTED' ? 'bg-red-500/10 text-red-500' :
-                                                            sub.status === 'INTERVIEWING' ? 'bg-purple-500/10 text-purple-500' :
-                                                                'bg-slate-500/10 text-slate-500'
+                                                    sub.status === 'REJECTED' ? 'bg-red-500/10 text-red-500' :
+                                                        sub.status === 'INTERVIEWING' ? 'bg-purple-500/10 text-purple-500' :
+                                                            'bg-slate-500/10 text-slate-500'
                                                     }`}>
                                                     {sub.status}
                                                 </span>
