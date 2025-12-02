@@ -50,7 +50,7 @@ export async function PATCH(request: Request) {
         // Log audit
         await prisma.auditLog.create({
             data: {
-                user_id: payload.id as string,
+                user_id: payload.userId as string,
                 action: `USER_VERIFICATION_${status}`,
                 entity_type: 'USER',
                 entity_id: id,

@@ -4,9 +4,16 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
+    const dbUrl = process.env.DATABASE_URL;
     console.log('🌱 Starting seed...');
+    console.log('Using DATABASE_URL:', dbUrl ? dbUrl.replace(/:[^:]+@/, ':****@') : 'UNDEFINED');
 
     // 1. Clean up existing data
+    await prisma.auditLog.deleteMany();
+    await prisma.ticket.deleteMany();
+    await prisma.escrowTransaction.deleteMany();
+    await prisma.invoice.deleteMany();
+    await prisma.payout.deleteMany();
     await prisma.submission.deleteMany();
     await prisma.interview.deleteMany();
     await prisma.job.deleteMany();
@@ -242,7 +249,7 @@ async function main() {
             verification_status: 'VERIFIED',
         },
     });
-    console.log('Created Financial Controller:', financialController.email);
+    console.log('✅ Created Financial Controller:', financialController.email);
 
     // Create Compliance Officer
     const complianceOfficer = await prisma.user.upsert({
@@ -255,9 +262,80 @@ async function main() {
             verification_status: 'VERIFIED',
         },
     });
-    console.log('Created Compliance Officer:', complianceOfficer.email);
+    console.log('✅ Created Compliance Officer:', complianceOfficer.email);
 
-    console.log('Seeding completed successfully');
+    // 8. Create Invoices
+    await prisma.invoice.createMany({
+        data: [
+            {
+                organization_id: org.id,
+                amount: 50000,
+                due_date: new Date(new Date().setDate(new Date().getDate() + 7)),
+                status: 'SENT',
+            },
+            {
+                organization_id: org.id,
+                amount: 75000,
+                due_date: new Date(new Date().setDate(new Date().getDate() - 5)),
+                status: 'OVERDUE',
+            }
+        ]
+    });
+    console.log('✅ Created Invoices');
+
+    // 9. Create Payouts
+    await prisma.payout.create({
+        data: {
+            tas_id: tasProfile.id,
+            amount: 25000,
+            status: 'PENDING',
+            notes: 'Commission for placement',
+        }
+    });
+    console.log('✅ Created Payouts');
+
+    // 10. Create Escrow Transactions
+    await prisma.escrowTransaction.create({
+        data: {
+            job_id: job.id,
+            amount: 50000,
+            status: 'HELD',
+            description: 'Success fee deposit',
+        }
+    });
+    console.log('✅ Created Escrow Transactions');
+
+    // 11. Create Audit Logs
+    await prisma.auditLog.createMany({
+        data: [
+            {
+                user_id: adminUser.id,
+                action: 'USER_VERIFICATION_VERIFIED',
+                entity_type: 'USER',
+                entity_id: tasUser.id,
+                details: { reason: 'Documents verified' },
+            },
+            {
+                user_id: complianceOfficer.id,
+                action: 'COMPLIANCE_CHECK_PASSED',
+                entity_type: 'ORGANIZATION',
+                entity_id: org.id,
+            }
+        ]
+    });
+    console.log('✅ Created Audit Logs');
+
+    // 12. Create Support Tickets
+    await prisma.ticket.create({
+        data: {
+            raised_by_id: companyUser.id,
+            reason: 'Billing Issue: Unable to download invoice for last month.',
+            status: 'OPEN',
+        }
+    });
+    console.log('✅ Created Support Tickets');
+
+    console.log('🌱 Seeding completed successfully');
 }
 
 main()
