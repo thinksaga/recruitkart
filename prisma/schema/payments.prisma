@@ -11,3 +11,45 @@ model CreditTransaction {
   // Relations
   tas TASProfile @relation(fields: [tas_id], references: [id])
 }
+
+model Invoice {
+  id              String        @id @default(uuid())
+  organization_id String
+  amount          Int
+  due_date        DateTime
+  status          InvoiceStatus @default(DRAFT)
+  items           Json? // JSON for invoice items
+  pdf_url         String?
+  created_at      DateTime      @default(now())
+  updated_at      DateTime      @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [organization_id], references: [id])
+}
+
+model Payout {
+  id           String       @id @default(uuid())
+  tas_id       String
+  amount       Int
+  status       PayoutStatus @default(PENDING)
+  processed_at DateTime?
+  notes        String?
+  created_at   DateTime     @default(now())
+  updated_at   DateTime     @updatedAt
+
+  // Relations
+  tas TASProfile @relation(fields: [tas_id], references: [id])
+}
+
+model EscrowTransaction {
+  id          String       @id @default(uuid())
+  job_id      String
+  amount      Int
+  status      EscrowStatus @default(HELD)
+  description String?
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
+
+  // Relations
+  job Job @relation(fields: [job_id], references: [id])
+}

@@ -2,22 +2,24 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, AlertCircle, CheckCircle, Clock, MessageSquare, Loader2 } from 'lucide-react';
+import { ArrowLeft, AlertCircle, CheckCircle, Clock, MessageSquare, Loader2, Filter } from 'lucide-react';
 
-export default function AdminTicketsPage() {
+export default function SupportTicketsPage() {
     const router = useRouter();
     const [tickets, setTickets] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedTicket, setSelectedTicket] = useState<any>(null);
     const [resolutionNote, setResolutionNote] = useState('');
+    const [statusFilter, setStatusFilter] = useState('ALL');
 
     useEffect(() => {
         fetchTickets();
-    }, []);
+    }, [statusFilter]);
 
     const fetchTickets = async () => {
+        setIsLoading(true);
         try {
-            const res = await fetch('/api/admin/tickets');
+            const res = await fetch(`/api/admin/tickets?status=${statusFilter}`);
             if (res.ok) {
                 const data = await res.json();
                 setTickets(data.tickets);
@@ -56,7 +58,7 @@ export default function AdminTicketsPage() {
             <div className="max-w-7xl mx-auto">
                 <div className="mb-8">
                     <button
-                        onClick={() => router.push('/admin')}
+                        onClick={() => router.push('/support')}
                         className="flex items-center gap-2 text-slate-400 hover:text-white mb-4"
                     >
                         <ArrowLeft className="w-4 h-4" />
@@ -66,12 +68,29 @@ export default function AdminTicketsPage() {
                     <p className="text-slate-400">Manage user support requests</p>
                 </div>
 
+                {/* Filters */}
+                <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 mb-6">
+                    <div className="flex items-center gap-4">
+                        <Filter className="w-5 h-5 text-slate-400" />
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="ALL">All Status</option>
+                            <option value="OPEN">Open</option>
+                            <option value="IN_PROGRESS">In Progress</option>
+                            <option value="RESOLVED">Resolved</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Ticket List */}
-                    <div className="lg:col-span-1 space-y-4">
+                    <div className="lg:col-span-1 space-y-4 max-h-[calc(100vh-300px)] overflow-y-auto pr-2">
                         {isLoading ? (
                             <div className="flex justify-center py-8">
-                                <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+                                <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
                             </div>
                         ) : tickets.length === 0 ? (
                             <div className="text-center py-8 text-slate-500">
@@ -84,7 +103,7 @@ export default function AdminTicketsPage() {
                                     key={ticket.id}
                                     onClick={() => setSelectedTicket(ticket)}
                                     className={`p-4 rounded-xl border cursor-pointer transition-all ${selectedTicket?.id === ticket.id
-                                            ? 'bg-emerald-500/10 border-emerald-500/50'
+                                            ? 'bg-blue-500/10 border-blue-500/50'
                                             : 'bg-slate-900 border-slate-800 hover:border-slate-700'
                                         }`}
                                 >
@@ -152,13 +171,13 @@ export default function AdminTicketsPage() {
                                                 value={resolutionNote}
                                                 onChange={(e) => setResolutionNote(e.target.value)}
                                                 rows={4}
-                                                className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 mb-4"
+                                                className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 mb-4"
                                                 placeholder="Enter details about how this issue was resolved..."
                                             />
                                             <button
                                                 onClick={() => handleResolve(selectedTicket.id)}
                                                 disabled={!resolutionNote.trim()}
-                                                className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
                                                 Resolve Ticket
                                             </button>
@@ -174,7 +193,7 @@ export default function AdminTicketsPage() {
                                 </div>
                             </div>
                         ) : (
-                            <div className="h-full flex items-center justify-center text-slate-500 bg-slate-900/50 border border-slate-800/50 rounded-xl border-dashed">
+                            <div className="h-full flex items-center justify-center text-slate-500 bg-slate-900/50 border border-slate-800/50 rounded-xl border-dashed min-h-[400px]">
                                 <div className="text-center">
                                     <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-50" />
                                     <p>Select a ticket to view details</p>

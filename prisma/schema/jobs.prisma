@@ -16,6 +16,7 @@ model Job {
   escrow_ledger EscrowLedger?
   submissions   Submission[]
   tickets       Ticket[]
+  escrow_transactions EscrowTransaction[]
 }
 
 model EscrowLedger {

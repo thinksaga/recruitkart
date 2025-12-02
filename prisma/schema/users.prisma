@@ -15,6 +15,7 @@ model User {
   tas_profile  TASProfile?
   candidate    Candidate?
   tickets      Ticket[]
+  audit_logs   AuditLog[]
 }
 
 model Organization {
@@ -31,6 +32,7 @@ model Organization {
   users       User[]
   jobs        Job[]
   invitations Invitation[]
+  invoices    Invoice[]
 }
 
 model Invitation {
@@ -63,4 +65,5 @@ model TASProfile {
   user        User         @relation(fields: [user_id], references: [id])
   submissions Submission[]
   transactions CreditTransaction[]
+  payouts     Payout[]
 }

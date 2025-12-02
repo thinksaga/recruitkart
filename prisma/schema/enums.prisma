@@ -64,5 +64,21 @@ enum InvitationStatus {
 
 enum TicketStatus {
   OPEN
+  IN_PROGRESS
   RESOLVED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  VOID
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
 }

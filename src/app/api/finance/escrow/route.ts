@@ -8,31 +8,26 @@ export async function GET() {
         const cookieStore = await cookies();
         const token = cookieStore.get('token')?.value;
 
-        if (!token) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
+        if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         const payload = await verifyJWT(token);
-
-        if (!payload || !['ADMIN', 'SUPPORT', 'OPERATOR'].includes(payload.role as string)) {
+        if (!payload || !['FINANCIAL_CONTROLLER', 'ADMIN'].includes(payload.role as string)) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
-        const organizations = await prisma.organization.findMany({
+        const escrowTransactions = await prisma.escrowTransaction.findMany({
             orderBy: { created_at: 'desc' },
             include: {
-                _count: {
+                job: {
                     select: {
-                        users: true,
-                        jobs: true,
-                    },
-                },
-            },
+                        title: true,
+                        organization: { select: { name: true } }
+                    }
+                }
+            }
         });
 
-        return NextResponse.json({ organizations });
+        return NextResponse.json({ escrowTransactions });
     } catch (error) {
-        console.error('Get organizations error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }
