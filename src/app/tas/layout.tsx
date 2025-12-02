@@ -4,17 +4,14 @@ import { usePathname, useRouter } from 'next/navigation';
 import { ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import {
-    LayoutDashboard,
-    Users,
-    Briefcase,
-    Send,
-    Coins,
     LogOut,
     Menu,
     X,
     UserCheck
 } from 'lucide-react';
 import { useState } from 'react';
+
+import { tasNavigation } from './config';
 
 interface TASLayoutProps {
     children: ReactNode;
@@ -25,13 +22,7 @@ export default function TASLayout({ children }: TASLayoutProps) {
     const router = useRouter();
     const [sidebarOpen, setSidebarOpen] = useState(true);
 
-    const navigation = [
-        { name: 'Dashboard', href: '/tas', icon: LayoutDashboard },
-        { name: 'Candidate Bank', href: '/tas/candidates', icon: Users },
-        { name: 'Job Marketplace', href: '/tas/jobs', icon: Briefcase },
-        { name: 'My Submissions', href: '/tas/submissions', icon: Send },
-        { name: 'Credits', href: '/tas/credits', icon: Coins },
-    ];
+    const navigation = tasNavigation;
 
     const handleLogout = async () => {
         try {

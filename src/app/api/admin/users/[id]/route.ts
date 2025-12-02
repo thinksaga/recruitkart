@@ -5,9 +5,10 @@ import { cookies } from 'next/headers';
 
 export async function PATCH(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         const cookieStore = await cookies();
         const token = cookieStore.get('token')?.value;
 
@@ -17,11 +18,10 @@ export async function PATCH(
 
         const payload = await verifyJWT(token);
 
-        if (!['ADMIN', 'SUPPORT'].includes(payload.role)) {
+        if (!payload || !['ADMIN', 'SUPPORT'].includes(payload.role as string)) {
             return NextResponse.json({ error: 'Forbidden - Admin or Support access required' }, { status: 403 });
         }
 
-        const { id } = params;
         const { verification_status } = await request.json();
 
         if (!['PENDING', 'VERIFIED', 'REJECTED'].includes(verification_status)) {

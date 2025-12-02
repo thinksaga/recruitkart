@@ -62,4 +62,5 @@ model TASProfile {
   // Relations
   user        User         @relation(fields: [user_id], references: [id])
   submissions Submission[]
+  transactions CreditTransaction[]
 }

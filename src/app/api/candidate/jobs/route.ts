@@ -15,7 +15,11 @@ export async function GET(req: Request) {
 
         const payload = await verifyJWT(token);
 
-        if (!payload || typeof payload.role !== 'string' || payload.role !== 'CANDIDATE') {
+        if (!payload) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        if (typeof payload.role !== 'string' || payload.role !== 'CANDIDATE') {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 

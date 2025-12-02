@@ -15,7 +15,7 @@ export async function GET() {
 
         const payload = await verifyJWT(token);
 
-        if (!payload || typeof payload.role !== 'string' || !['ADMIN', 'SUPPORT', 'OPERATOR'].includes(payload.role)) {
+        if (!payload || !['ADMIN', 'SUPPORT'].includes(payload.role as string)) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 

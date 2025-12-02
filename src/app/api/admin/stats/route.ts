@@ -16,8 +16,8 @@ export async function GET() {
         const payload = await verifyJWT(token);
 
         // Check if user is ADMIN, SUPPORT, or OPERATOR
-        if (!payload || typeof payload.role !== 'string' || !['ADMIN', 'SUPPORT', 'OPERATOR'].includes(payload.role)) {
-            return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
+        if (!payload || !['ADMIN', 'SUPPORT', 'OPERATOR'].includes(payload.role as string)) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
         const cacheKey = 'admin:dashboard:stats';

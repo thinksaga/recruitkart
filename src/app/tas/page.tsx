@@ -1,15 +1,53 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Users, Send, Coins, TrendingUp } from 'lucide-react';
+import { Users, Send, Coins, TrendingUp, Loader2 } from 'lucide-react';
 
 export default function TASDashboard() {
-    const stats = [
-        { name: 'Total Candidates', value: '48', icon: Users, color: 'text-orange-500', bg: 'bg-orange-500/10' },
-        { name: 'Active Submissions', value: '12', icon: Send, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-        { name: 'Credits Balance', value: '100', icon: Coins, color: 'text-yellow-500', bg: 'bg-yellow-500/10' },
-        { name: 'Success Rate', value: '68%', icon: TrendingUp, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-    ];
+    const [stats, setStats] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const res = await fetch('/api/tas/stats');
+                if (res.ok) {
+                    const data = await res.json();
+                    // Map icon strings to components
+                    const mappedStats = data.stats.map((stat: any) => ({
+                        ...stat,
+                        icon: getIcon(stat.icon)
+                    }));
+                    setStats(mappedStats);
+                }
+            } catch (error) {
+                console.error('Failed to fetch stats:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchStats();
+    }, []);
+
+    const getIcon = (iconName: string) => {
+        switch (iconName) {
+            case 'Users': return Users;
+            case 'Send': return Send;
+            case 'Coins': return Coins;
+            case 'TrendingUp': return TrendingUp;
+            default: return Users;
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <div className="flex h-full items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+            </div>
+        );
+    }
 
     return (
         <div className="p-8 space-y-8">
@@ -39,7 +77,7 @@ export default function TASDashboard() {
                 ))}
             </div>
 
-            {/* Recent Submissions (Placeholder) */}
+            {/* Recent Submissions (Placeholder - could be fetched from submissions API too) */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}

@@ -1,0 +1,13 @@
+model CreditTransaction {
+  id          String   @id @default(uuid())
+  tas_id      String
+  type        String   // "CREDIT" or "DEBIT"
+  amount      Int
+  description String
+  status      String   @default("COMPLETED") // "COMPLETED", "PENDING", "FAILED"
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  // Relations
+  tas TASProfile @relation(fields: [tas_id], references: [id])
+}
