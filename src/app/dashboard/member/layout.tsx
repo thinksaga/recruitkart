@@ -28,7 +28,7 @@ export default function MemberLayout({ children }: MemberLayoutProps) {
         { name: 'Dashboard', href: '/dashboard/member', icon: LayoutDashboard },
         { name: 'Jobs', href: '/dashboard/member/jobs', icon: Briefcase },
         { name: 'Candidates', href: '/dashboard/member/candidates', icon: Users },
-        { name: 'My Tasks', href: '/dashboard/member/tasks', icon: CheckSquare },
+        { name: 'My Interviews', href: '/dashboard/member/interviews', icon: CheckSquare },
     ];
 
     const handleLogout = async () => {

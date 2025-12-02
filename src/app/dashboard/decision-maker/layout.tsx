@@ -27,10 +27,8 @@ export default function DecisionMakerLayout({ children }: DecisionMakerLayoutPro
 
     const navigation = [
         { name: 'Dashboard', href: '/dashboard/decision-maker', icon: LayoutDashboard },
-        { name: 'Pending Approvals', href: '/dashboard/decision-maker/approvals', icon: CheckCircle },
-        { name: 'Candidate Pipeline', href: '/dashboard/decision-maker/pipeline', icon: TrendingUp },
-        { name: 'Analytics', href: '/dashboard/decision-maker/analytics', icon: BarChart3 },
-        { name: 'Team Performance', href: '/dashboard/decision-maker/team', icon: Users },
+        { name: 'Approvals', href: '/dashboard/decision-maker/approvals', icon: CheckCircle },
+        { name: 'Pipeline', href: '/dashboard/decision-maker/pipeline', icon: TrendingUp },
     ];
 
     const handleLogout = async () => {

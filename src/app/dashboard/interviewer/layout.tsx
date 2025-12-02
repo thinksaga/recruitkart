@@ -29,8 +29,6 @@ export default function InterviewerLayout({ children }: InterviewerLayoutProps) 
         { name: 'Dashboard', href: '/dashboard/interviewer', icon: LayoutDashboard },
         { name: 'My Interviews', href: '/dashboard/interviewer/interviews', icon: Video },
         { name: 'Candidates', href: '/dashboard/interviewer/candidates', icon: Users },
-        { name: 'Schedule', href: '/dashboard/interviewer/schedule', icon: Calendar },
-        { name: 'Feedback', href: '/dashboard/interviewer/feedback', icon: FileText },
     ];
 
     const handleLogout = async () => {

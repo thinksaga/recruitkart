@@ -1,0 +1,213 @@
+'use client';
+
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { ArrowLeft, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+
+export default function NewJobPage() {
+    const router = useRouter();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+    const [formData, setFormData] = useState({
+        title: '',
+        description: '',
+        salary_min: '',
+        salary_max: '',
+        success_fee_amount: '',
+        location: 'Remote', // Default
+        type: 'Full-time' // Default
+    });
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        setMessage(null);
+
+        try {
+            const payload = {
+                ...formData,
+                salary_min: Number(formData.salary_min),
+                salary_max: Number(formData.salary_max),
+                success_fee_amount: Number(formData.success_fee_amount)
+            };
+
+            const res = await fetch('/api/company/jobs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                setMessage({ type: 'success', text: 'Job posted successfully!' });
+                setTimeout(() => {
+                    router.push('/dashboard/company/jobs');
+                }, 1500);
+            } else {
+                setMessage({ type: 'error', text: data.error || 'Failed to post job' });
+            }
+        } catch (error) {
+            setMessage({ type: 'error', text: 'An error occurred' });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="p-8 max-w-4xl mx-auto">
+            <button
+                onClick={() => router.back()}
+                className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors"
+            >
+                <ArrowLeft className="w-4 h-4" />
+                Back to Jobs
+            </button>
+
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold text-white mb-2">Post a New Job</h1>
+                <p className="text-slate-400">Create a new job listing to start receiving candidates.</p>
+            </div>
+
+            {message && (
+                <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`p-4 rounded-xl mb-6 flex items-center gap-3 ${message.type === 'success' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'
+                        }`}
+                >
+                    {message.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+                    {message.text}
+                </motion.div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-8">
+                {/* Basic Info */}
+                <div className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800/50">
+                    <h2 className="text-lg font-semibold text-white mb-4">Basic Information</h2>
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-1">Job Title *</label>
+                            <input
+                                type="text"
+                                required
+                                value={formData.title}
+                                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-rose-500 transition-colors"
+                                placeholder="e.g. Senior Frontend Engineer"
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-1">Location</label>
+                                <input
+                                    type="text"
+                                    value={formData.location}
+                                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-rose-500 transition-colors"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-1">Type</label>
+                                <select
+                                    value={formData.type}
+                                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-rose-500 transition-colors"
+                                >
+                                    <option value="Full-time">Full-time</option>
+                                    <option value="Contract">Contract</option>
+                                    <option value="Part-time">Part-time</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Compensation */}
+                <div className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800/50">
+                    <h2 className="text-lg font-semibold text-white mb-4">Compensation & Fees</h2>
+                    <div className="grid grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-1">Min Salary (Annual) *</label>
+                            <div className="relative">
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">₹</span>
+                                <input
+                                    type="number"
+                                    required
+                                    min="0"
+                                    value={formData.salary_min}
+                                    onChange={(e) => setFormData({ ...formData, salary_min: e.target.value })}
+                                    className="w-full pl-8 pr-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-rose-500 transition-colors"
+                                    placeholder="1000000"
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-1">Max Salary (Annual) *</label>
+                            <div className="relative">
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">₹</span>
+                                <input
+                                    type="number"
+                                    required
+                                    min="0"
+                                    value={formData.salary_max}
+                                    onChange={(e) => setFormData({ ...formData, salary_max: e.target.value })}
+                                    className="w-full pl-8 pr-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-rose-500 transition-colors"
+                                    placeholder="2000000"
+                                />
+                            </div>
+                        </div>
+                        <div className="col-span-2">
+                            <label className="block text-sm font-medium text-slate-400 mb-1">Success Fee (Bounty) *</label>
+                            <div className="relative">
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">₹</span>
+                                <input
+                                    type="number"
+                                    required
+                                    min="0"
+                                    value={formData.success_fee_amount}
+                                    onChange={(e) => setFormData({ ...formData, success_fee_amount: e.target.value })}
+                                    className="w-full pl-8 pr-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-rose-500 transition-colors"
+                                    placeholder="50000"
+                                />
+                            </div>
+                            <p className="text-xs text-slate-500 mt-1">This amount will be paid to the recruiter upon successful hiring.</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Description */}
+                <div className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800/50">
+                    <h2 className="text-lg font-semibold text-white mb-4">Job Description</h2>
+                    <textarea
+                        required
+                        rows={6}
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-rose-500 transition-colors resize-none"
+                        placeholder="Describe the role, responsibilities, and requirements..."
+                    />
+                </div>
+
+                <div className="flex justify-end pt-4">
+                    <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="px-8 py-4 bg-rose-500 hover:bg-rose-600 text-white rounded-xl font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                Posting Job...
+                            </>
+                        ) : (
+                            'Post Job'
+                        )}
+                    </button>
+                </div>
+            </form>
+        </div>
+    );
+}
