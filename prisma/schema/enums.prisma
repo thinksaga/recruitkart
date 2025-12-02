@@ -82,3 +82,8 @@ enum PayoutStatus {
   COMPLETED
   FAILED
 }
+enum OrganizationStatus {
+  ACTIVE
+  BLOCKED
+  PENDING_VERIFICATION
+}

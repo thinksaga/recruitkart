@@ -16,7 +16,8 @@ import {
     Edit,
     Trash2,
     X,
-    Loader2
+    Loader2,
+    Eye
 } from 'lucide-react';
 
 interface User {
@@ -59,6 +60,8 @@ export default function AdminUsersPage() {
         name: ''
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const [viewUser, setViewUser] = useState<User | null>(null);
 
     const handleCreateUser = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -413,6 +416,13 @@ export default function AdminUsersPage() {
                                                     </button>
                                                 )}
                                                 <button
+                                                    onClick={() => setViewUser(user)}
+                                                    className="p-1 text-slate-400 hover:text-emerald-500 transition-colors"
+                                                    title="View Details"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                </button>
+                                                <button
                                                     onClick={() => openEditModal(user)}
                                                     className="p-1 text-slate-400 hover:text-white transition-colors"
                                                     title="Edit Role"
@@ -509,6 +519,80 @@ export default function AdminUsersPage() {
                                 )}
                             </button>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* View Details Modal */}
+            {viewUser && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-slate-900 border border-slate-800 rounded-xl w-full max-w-lg shadow-2xl">
+                        <div className="p-6 border-b border-slate-800 flex items-center justify-between">
+                            <h3 className="text-xl font-bold text-white">User Details</h3>
+                            <button onClick={() => setViewUser(null)} className="text-slate-400 hover:text-white">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div>
+                                <h4 className="text-sm font-medium text-slate-400">Email</h4>
+                                <p className="text-white text-lg">{viewUser.email}</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <h4 className="text-sm font-medium text-slate-400">Role</h4>
+                                    <span className="px-2 py-1 bg-slate-800 rounded text-sm font-medium mt-1 inline-block">
+                                        {viewUser.role}
+                                    </span>
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-medium text-slate-400">Status</h4>
+                                    <span className={`px-2 py-1 rounded text-sm font-medium mt-1 inline-block ${viewUser.verification_status === 'VERIFIED' ? 'text-green-500 bg-green-500/10' :
+                                        viewUser.verification_status === 'REJECTED' ? 'text-red-500 bg-red-500/10' :
+                                            'text-yellow-500 bg-yellow-500/10'
+                                        }`}>
+                                        {viewUser.verification_status}
+                                    </span>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-medium text-slate-400">Joined On</h4>
+                                <p className="text-white">{new Date(viewUser.created_at).toLocaleString()}</p>
+                            </div>
+
+                            {viewUser.organization && (
+                                <div className="border-t border-slate-800 pt-4 mt-4">
+                                    <h4 className="text-md font-bold text-white mb-2 flex items-center gap-2">
+                                        <Building2 className="w-4 h-4" /> Organization
+                                    </h4>
+                                    <div className="bg-slate-800/50 p-3 rounded-lg space-y-2">
+                                        <p><span className="text-slate-400 text-sm">Name:</span> {viewUser.organization.name}</p>
+                                        <p><span className="text-slate-400 text-sm">Domain:</span> {viewUser.organization.domain || 'N/A'}</p>
+                                        <p><span className="text-slate-400 text-sm">GSTIN:</span> {viewUser.organization.gstin || 'N/A'}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {viewUser.tas_profile && (
+                                <div className="border-t border-slate-800 pt-4 mt-4">
+                                    <h4 className="text-md font-bold text-white mb-2 flex items-center gap-2">
+                                        <User className="w-4 h-4" /> TAS Profile
+                                    </h4>
+                                    <div className="bg-slate-800/50 p-3 rounded-lg space-y-2">
+                                        <p><span className="text-slate-400 text-sm">PAN:</span> {viewUser.tas_profile.pan_number}</p>
+                                        <p><span className="text-slate-400 text-sm">Credits:</span> {viewUser.tas_profile.credits_balance}</p>
+                                        {viewUser.tas_profile.linkedin_url && (
+                                            <p>
+                                                <span className="text-slate-400 text-sm">LinkedIn:</span>{' '}
+                                                <a href={viewUser.tas_profile.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-emerald-500 hover:underline">
+                                                    View Profile
+                                                </a>
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}

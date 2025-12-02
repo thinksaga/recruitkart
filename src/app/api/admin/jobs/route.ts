@@ -4,7 +4,7 @@ import { cache } from '@/lib/cache';
 import { verifyJWT } from '@/lib/auth';
 import { cookies } from 'next/headers';
 
-export async function GET() {
+export async function GET(req: Request) {
     try {
         const cookieStore = await cookies();
         const token = cookieStore.get('token')?.value;
@@ -19,14 +19,25 @@ export async function GET() {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
-        const cacheKey = 'admin:jobs:list';
-        const cachedJobs = await cache.get(cacheKey);
+        const { searchParams } = new URL(req.url);
+        const search = searchParams.get('search');
+        const status = searchParams.get('status');
 
-        if (cachedJobs) {
-            return NextResponse.json({ jobs: cachedJobs });
+        const where: any = {};
+
+        if (search) {
+            where.OR = [
+                { title: { contains: search, mode: 'insensitive' } },
+                { organization: { name: { contains: search, mode: 'insensitive' } } },
+            ];
+        }
+
+        if (status && status !== 'ALL') {
+            where.status = status;
         }
 
         const jobs = await prisma.job.findMany({
+            where,
             orderBy: { created_at: 'desc' },
             include: {
                 organization: {
@@ -36,8 +47,6 @@ export async function GET() {
                 },
             },
         });
-
-        await cache.set(cacheKey, jobs, 300); // Cache for 5 minutes
 
         return NextResponse.json({ jobs });
     } catch (error) {
