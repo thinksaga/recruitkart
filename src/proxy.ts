@@ -1,6 +1,6 @@
 import proxy from '@/lib/proxy';
 
-export const middleware = proxy;
+export default proxy;
 
 export const config = {
     matcher: [

@@ -6,7 +6,13 @@ model User {
   verification_status VerificationStatus @default(PENDING)
   organization_id     String?
   
+  // Verification Flags
+  is_phone_verified   Boolean            @default(false)
+  is_email_verified   Boolean            @default(false)
+  
   // Profile & Preferences
+  full_name           String?
+  designation         String?
   phone               String?            @unique
   avatar_url          String?
   last_login_at       DateTime?
@@ -35,6 +41,7 @@ model Organization {
   domain     String?
   website    String?
   logo_url   String?
+  gst_certificate_url String?
   
   // Expanded Details
   description    String?   @db.Text
@@ -76,6 +83,7 @@ model TASProfile {
   id              String   @id @default(uuid())
   user_id         String   @unique
   pan_number      String   @unique
+  pan_file_url    String?
   linkedin_url    String?
   credits_balance Int      @default(0)
   created_at      DateTime @default(now())
