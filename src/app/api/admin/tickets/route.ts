@@ -31,12 +31,20 @@ export async function GET(request: NextRequest) {
                 raised_by: {
                     select: {
                         email: true,
-                        role: true
+                        role: true,
+                        id: true,
+                        // name: true // Assuming name exists on User or related profile
                     }
                 },
                 related_job: {
                     select: {
                         title: true
+                    }
+                },
+                assigned_to: {
+                    select: {
+                        email: true,
+                        // name: true
                     }
                 }
             }
@@ -66,13 +74,21 @@ export async function PATCH(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { id, status, resolution_note } = body;
+        const { id, status, resolution_note, priority, category, assigned_to_id } = body;
 
         const ticket = await prisma.ticket.update({
             where: { id },
             data: {
                 status,
-                resolution_note
+                resolution_note,
+                priority,
+                category,
+                assigned_to_id
+            },
+            include: {
+                assigned_to: {
+                    select: { email: true }
+                }
             }
         });
 
@@ -83,7 +99,7 @@ export async function PATCH(request: NextRequest) {
                 action: 'UPDATE_TICKET',
                 entity_type: 'TICKET',
                 entity_id: id,
-                details: { status, resolution_note }
+                details: { status, resolution_note, priority, category, assigned_to_id }
             }
         });
 

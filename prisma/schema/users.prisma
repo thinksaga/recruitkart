@@ -5,6 +5,14 @@ model User {
   role                UserRole
   verification_status VerificationStatus @default(PENDING)
   organization_id     String?
+  
+  // Profile & Preferences
+  phone               String?            @unique
+  avatar_url          String?
+  last_login_at       DateTime?
+  is_active           Boolean            @default(true)
+  preferences         Json?              // UI settings, notification preferences
+
   reset_token         String?
   reset_token_expiry  DateTime?
   created_at          DateTime           @default(now())
@@ -15,6 +23,7 @@ model User {
   tas_profile  TASProfile?
   candidate    Candidate?
   tickets      Ticket[]
+  assigned_tickets Ticket[] @relation("TicketAssignee")
   audit_logs   AuditLog[]
 }
 
@@ -26,6 +35,16 @@ model Organization {
   domain     String?
   website    String?
   logo_url   String?
+  
+  // Expanded Details
+  description    String?   @db.Text
+  industry       String?
+  size           String?   // e.g., "1-10", "11-50"
+  founded_year   Int?
+  address        Json?     // { street, city, state, zip, country }
+  social_links   Json?     // { linkedin, twitter, website }
+  branding_color String?   // Hex code
+
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 

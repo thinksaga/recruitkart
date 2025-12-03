@@ -12,12 +12,18 @@ export default function NewJobPage() {
 
     const [formData, setFormData] = useState({
         title: '',
-        description: '',
+        department: '',
+        location: '',
+        type: 'FULL_TIME',
+        work_mode: 'ONSITE',
+        experience_min: '',
+        experience_max: '',
+        skills: '',
+        benefits: '',
         salary_min: '',
         salary_max: '',
         success_fee_amount: '',
-        location: 'Remote', // Default
-        type: 'Full-time' // Default
+        description: ''
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -30,7 +36,12 @@ export default function NewJobPage() {
                 ...formData,
                 salary_min: Number(formData.salary_min),
                 salary_max: Number(formData.salary_max),
-                success_fee_amount: Number(formData.success_fee_amount)
+                success_fee_amount: Number(formData.success_fee_amount),
+                experience_min: formData.experience_min ? Number(formData.experience_min) : undefined,
+                experience_max: formData.experience_max ? Number(formData.experience_max) : undefined,
+                skills: formData.skills.split(',').map(s => s.trim()).filter(Boolean),
+                benefits: formData.benefits.split(',').map(s => s.trim()).filter(Boolean),
+                job_type: formData.type, // Map type to job_type
             };
 
             const res = await fetch('/api/company/jobs', {
@@ -88,18 +99,30 @@ export default function NewJobPage() {
                 <div className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800/50">
                     <h2 className="text-lg font-semibold text-white mb-4">Basic Information</h2>
                     <div className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-1">Job Title *</label>
-                            <input
-                                type="text"
-                                required
-                                value={formData.title}
-                                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-rose-500 transition-colors"
-                                placeholder="e.g. Senior Frontend Engineer"
-                            />
-                        </div>
                         <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-1">Job Title *</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={formData.title}
+                                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-rose-500 transition-colors"
+                                    placeholder="e.g. Senior Frontend Engineer"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-1">Department</label>
+                                <input
+                                    type="text"
+                                    value={formData.department}
+                                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-rose-500 transition-colors"
+                                    placeholder="e.g. Engineering"
+                                />
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-400 mb-1">Location</label>
                                 <input
@@ -107,6 +130,7 @@ export default function NewJobPage() {
                                     value={formData.location}
                                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                                     className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-rose-500 transition-colors"
+                                    placeholder="e.g. Bangalore"
                                 />
                             </div>
                             <div>
@@ -116,11 +140,66 @@ export default function NewJobPage() {
                                     onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                                     className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-rose-500 transition-colors"
                                 >
-                                    <option value="Full-time">Full-time</option>
-                                    <option value="Contract">Contract</option>
-                                    <option value="Part-time">Part-time</option>
+                                    <option value="FULL_TIME">Full-time</option>
+                                    <option value="CONTRACT">Contract</option>
+                                    <option value="PART_TIME">Part-time</option>
+                                    <option value="FREELANCE">Freelance</option>
+                                    <option value="INTERNSHIP">Internship</option>
                                 </select>
                             </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-1">Work Mode</label>
+                                <select
+                                    value={formData.work_mode}
+                                    onChange={(e) => setFormData({ ...formData, work_mode: e.target.value })}
+                                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-rose-500 transition-colors"
+                                >
+                                    <option value="ONSITE">Onsite</option>
+                                    <option value="REMOTE">Remote</option>
+                                    <option value="HYBRID">Hybrid</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Experience & Skills */}
+                <div className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800/50">
+                    <h2 className="text-lg font-semibold text-white mb-4">Experience & Skills</h2>
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-1">Min Experience (Years)</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    value={formData.experience_min}
+                                    onChange={(e) => setFormData({ ...formData, experience_min: e.target.value })}
+                                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-rose-500 transition-colors"
+                                    placeholder="e.g. 3"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-1">Max Experience (Years)</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    value={formData.experience_max}
+                                    onChange={(e) => setFormData({ ...formData, experience_max: e.target.value })}
+                                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-rose-500 transition-colors"
+                                    placeholder="e.g. 5"
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-1">Skills (Comma separated)</label>
+                            <textarea
+                                rows={2}
+                                value={formData.skills}
+                                onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
+                                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-rose-500 transition-colors resize-none"
+                                placeholder="e.g. React, Node.js, TypeScript"
+                            />
                         </div>
                     </div>
                 </div>
@@ -174,6 +253,16 @@ export default function NewJobPage() {
                                 />
                             </div>
                             <p className="text-xs text-slate-500 mt-1">This amount will be paid to the recruiter upon successful hiring.</p>
+                        </div>
+                        <div className="col-span-2">
+                            <label className="block text-sm font-medium text-slate-400 mb-1">Benefits (Comma separated)</label>
+                            <textarea
+                                rows={2}
+                                value={formData.benefits}
+                                onChange={(e) => setFormData({ ...formData, benefits: e.target.value })}
+                                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-rose-500 transition-colors resize-none"
+                                placeholder="e.g. Health Insurance, Remote Work, Stock Options"
+                            />
                         </div>
                     </div>
                 </div>

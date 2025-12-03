@@ -74,7 +74,7 @@ export async function GET(
             jobId: submission.job.id,
             experience: submission.candidate.years_of_experience,
             location: submission.candidate.personal_details ? (submission.candidate.personal_details as any).current_location : '',
-            summary: submission.candidate.summary,
+            bio: submission.candidate.bio,
             skills: submission.candidate.skills_primary,
             resumeUrl: submission.candidate.resume_url,
             status: submission.status,

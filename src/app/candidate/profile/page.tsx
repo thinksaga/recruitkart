@@ -63,19 +63,22 @@ export default function ProfilePage() {
             // Populate form
             setValue('full_name', profile.full_name);
             setValue('phone', profile.phone);
-            setValue('summary', profile.summary || '');
+            setValue('bio', profile.bio || '');
+            setValue('dob', profile.dob ? new Date(profile.dob).toISOString().split('T')[0] : '');
+            setValue('gender', profile.gender || '');
+            setValue('nationality', profile.nationality || '');
+            setValue('address', profile.address || '');
+            setValue('city', profile.city || '');
+            setValue('state', profile.state || '');
+            setValue('country', profile.country || '');
+            setValue('zip_code', profile.zip_code || '');
             setValue('years_of_experience', profile.years_of_experience || 0);
+            setValue('current_ctc', profile.current_ctc || '');
+            setValue('expected_ctc', profile.expected_ctc || '');
+            setValue('notice_period', profile.notice_period || '');
             setValue('resume_url', profile.resume_url || '');
             setValue('skills_primary', profile.skills_primary.join(', '));
             setValue('skills_secondary', profile.skills_secondary.join(', '));
-
-            if (profile.personal_details) {
-                setValue('personal_details.current_location', profile.personal_details.current_location);
-                setValue('personal_details.notice_period', profile.personal_details.notice_period);
-                setValue('personal_details.ctc', profile.personal_details.ctc);
-                setValue('personal_details.expected_ctc', profile.personal_details.expected_ctc);
-                setValue('personal_details.preferred_locations', (profile.personal_details.preferred_locations || []).join(', '));
-            }
 
             if (profile.social_links) {
                 setValue('social_links.linkedin', profile.social_links.linkedin);
@@ -131,13 +134,15 @@ export default function ProfilePage() {
             // Transform data for API
             const formattedData = {
                 ...data,
-                years_of_experience: parseFloat(data.years_of_experience),
+                years_of_experience: data.years_of_experience ? parseFloat(data.years_of_experience) : undefined,
+                current_ctc: data.current_ctc ? parseFloat(data.current_ctc) : undefined,
+                expected_ctc: data.expected_ctc ? parseFloat(data.expected_ctc) : undefined,
                 skills_primary: data.skills_primary.split(',').map((s: string) => s.trim()).filter(Boolean),
                 skills_secondary: data.skills_secondary.split(',').map((s: string) => s.trim()).filter(Boolean),
-                personal_details: {
-                    ...data.personal_details,
-                    preferred_locations: data.personal_details.preferred_locations.split(',').map((s: string) => s.trim()).filter(Boolean),
-                },
+                // personal_details: {
+                //     ...data.personal_details,
+                //     preferred_locations: data.personal_details.preferred_locations.split(',').map((s: string) => s.trim()).filter(Boolean),
+                // },
                 experience: data.experience.map((exp: any) => ({
                     ...exp,
                     skills_used: exp.skills_used ? exp.skills_used.split(',').map((s: string) => s.trim()).filter(Boolean) : [],
@@ -211,12 +216,40 @@ export default function ProfilePage() {
                             />
                         </div>
                         <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-slate-400 mb-2">Professional Summary</label>
+                            <label className="block text-sm font-medium text-slate-400 mb-2">Professional Bio</label>
                             <textarea
-                                {...register('summary')}
+                                {...register('bio')}
                                 rows={3}
                                 className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
                                 placeholder="Brief overview of your professional background..."
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-2">Date of Birth</label>
+                            <input
+                                type="date"
+                                {...register('dob')}
+                                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-2">Gender</label>
+                            <select
+                                {...register('gender')}
+                                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                            >
+                                <option value="">Select...</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                                <option value="Prefer not to say">Prefer not to say</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-2">Nationality</label>
+                            <input
+                                {...register('nationality')}
+                                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
                             />
                         </div>
                         <div>
@@ -225,6 +258,74 @@ export default function ProfilePage() {
                                 type="number"
                                 step="0.1"
                                 {...register('years_of_experience')}
+                                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-2">Current CTC (LPA)</label>
+                            <input
+                                type="number"
+                                step="0.1"
+                                {...register('current_ctc')}
+                                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-2">Expected CTC (LPA)</label>
+                            <input
+                                type="number"
+                                step="0.1"
+                                {...register('expected_ctc')}
+                                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-2">Notice Period</label>
+                            <select
+                                {...register('notice_period')}
+                                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                            >
+                                <option value="">Select...</option>
+                                <option value="Immediate">Immediate</option>
+                                <option value="15 Days">15 Days</option>
+                                <option value="30 Days">30 Days</option>
+                                <option value="60 Days">60 Days</option>
+                                <option value="90 Days">90 Days</option>
+                            </select>
+                        </div>
+                        <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-slate-400 mb-2">Address</label>
+                            <input
+                                {...register('address')}
+                                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                                placeholder="Street Address"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-2">City</label>
+                            <input
+                                {...register('city')}
+                                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-2">State</label>
+                            <input
+                                {...register('state')}
+                                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-2">Country</label>
+                            <input
+                                {...register('country')}
+                                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-2">Zip Code</label>
+                            <input
+                                {...register('zip_code')}
                                 className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
                             />
                         </div>

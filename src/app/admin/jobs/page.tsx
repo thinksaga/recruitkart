@@ -25,7 +25,13 @@ interface Job {
     salary_max: number;
     status: string;
     location?: string;
-    type?: string;
+    job_type?: string;
+    work_mode?: string;
+    experience_min?: number;
+    experience_max?: number;
+    skills?: string[];
+    benefits?: string[];
+    department?: string;
     created_at: string;
     organization: {
         name: string;
@@ -42,18 +48,43 @@ export default function AdminJobsPage() {
     // Modal State
     const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
-    useEffect(() => {
-        const delayDebounceFn = setTimeout(() => {
-            fetchJobs();
-        }, 500);
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalJobs, setTotalJobs] = useState(0);
+    const [sortBy, setSortBy] = useState('created_at');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-        return () => clearTimeout(delayDebounceFn);
-    }, [searchTerm, statusFilter]);
+    // Debounce Search
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchTerm);
+            setPage(1);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
+    useEffect(() => {
+        setPage(1);
+    }, [statusFilter]);
+
+    useEffect(() => {
+        fetchJobs();
+    }, [page, limit, debouncedSearch, statusFilter, sortBy, sortOrder]);
 
     const fetchJobs = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`/api/admin/jobs?search=${searchTerm}&status=${statusFilter}`);
+            const params = new URLSearchParams({
+                page: page.toString(),
+                limit: limit.toString(),
+                search: debouncedSearch,
+                status: statusFilter,
+                sortBy,
+                sortOrder
+            });
+            const res = await fetch(`/api/admin/jobs?${params}`);
             if (!res.ok) {
                 if (res.status === 401 || res.status === 403) {
                     router.push('/login');
@@ -62,10 +93,33 @@ export default function AdminJobsPage() {
             }
             const data = await res.json();
             setJobs(data.jobs || []);
+            setTotalPages(data.pagination.pages);
+            setTotalJobs(data.pagination.total);
         } catch (error) {
             console.error('Error fetching jobs:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleSort = (field: string) => {
+        if (sortBy === field) {
+            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortBy(field);
+            setSortOrder('desc');
+        }
+    };
+
+    const handleViewDetails = async (jobId: string) => {
+        try {
+            const res = await fetch(`/api/admin/jobs/${jobId}`);
+            if (!res.ok) throw new Error('Failed to fetch job details');
+            const data = await res.json();
+            setSelectedJob(data.job);
+        } catch (error) {
+            console.error('Error fetching job details:', error);
+            alert('Failed to fetch job details');
         }
     };
 
@@ -83,6 +137,22 @@ export default function AdminJobsPage() {
                     </button>
                     <h1 className="text-4xl font-bold mb-2">Job Management</h1>
                     <p className="text-slate-400">View and manage all job postings</p>
+                </div>
+
+                {/* Stats Row */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
+                        <div className="text-2xl font-bold">{totalJobs}</div>
+                        <div className="text-sm text-slate-400">Total Jobs</div>
+                    </div>
+                    <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
+                        <div className="text-2xl font-bold text-emerald-500">{page}</div>
+                        <div className="text-sm text-slate-400">Current Page</div>
+                    </div>
+                    <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
+                        <div className="text-2xl font-bold text-blue-500">{totalPages}</div>
+                        <div className="text-sm text-slate-400">Total Pages</div>
+                    </div>
                 </div>
 
                 {/* Filters */}
@@ -120,11 +190,31 @@ export default function AdminJobsPage() {
                         <table className="w-full">
                             <thead className="bg-slate-800">
                                 <tr>
-                                    <th className="text-left py-4 px-6 text-slate-300 font-medium">Job Title</th>
+                                    <th
+                                        className="text-left py-4 px-6 text-slate-300 font-medium cursor-pointer hover:text-white"
+                                        onClick={() => handleSort('title')}
+                                    >
+                                        Job Title {sortBy === 'title' && (sortOrder === 'asc' ? '↑' : '↓')}
+                                    </th>
                                     <th className="text-left py-4 px-6 text-slate-300 font-medium">Company</th>
-                                    <th className="text-left py-4 px-6 text-slate-300 font-medium">Salary Range</th>
-                                    <th className="text-left py-4 px-6 text-slate-300 font-medium">Status</th>
-                                    <th className="text-left py-4 px-6 text-slate-300 font-medium">Posted</th>
+                                    <th
+                                        className="text-left py-4 px-6 text-slate-300 font-medium cursor-pointer hover:text-white"
+                                        onClick={() => handleSort('salary_min')}
+                                    >
+                                        Salary Range {sortBy === 'salary_min' && (sortOrder === 'asc' ? '↑' : '↓')}
+                                    </th>
+                                    <th
+                                        className="text-left py-4 px-6 text-slate-300 font-medium cursor-pointer hover:text-white"
+                                        onClick={() => handleSort('status')}
+                                    >
+                                        Status {sortBy === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
+                                    </th>
+                                    <th
+                                        className="text-left py-4 px-6 text-slate-300 font-medium cursor-pointer hover:text-white"
+                                        onClick={() => handleSort('created_at')}
+                                    >
+                                        Posted {sortBy === 'created_at' && (sortOrder === 'asc' ? '↑' : '↓')}
+                                    </th>
                                     <th className="text-left py-4 px-6 text-slate-300 font-medium">Actions</th>
                                 </tr>
                             </thead>
@@ -144,7 +234,11 @@ export default function AdminJobsPage() {
                                     </tr>
                                 ) : (
                                     jobs.map((job) => (
-                                        <tr key={job.id} className="border-b border-slate-800/50 hover:bg-slate-800/50">
+                                        <tr
+                                            key={job.id}
+                                            className="border-b border-slate-800/50 hover:bg-slate-800/50 cursor-pointer transition-colors"
+                                            onClick={() => handleViewDetails(job.id)}
+                                        >
                                             <td className="py-4 px-6">
                                                 <div className="font-medium">{job.title}</div>
                                                 <div className="text-sm text-slate-400 line-clamp-1">
@@ -177,9 +271,9 @@ export default function AdminJobsPage() {
                                                     {new Date(job.created_at).toLocaleDateString()}
                                                 </div>
                                             </td>
-                                            <td className="py-4 px-6">
+                                            <td className="py-4 px-6" onClick={(e) => e.stopPropagation()}>
                                                 <button
-                                                    onClick={() => setSelectedJob(job)}
+                                                    onClick={() => handleViewDetails(job.id)}
                                                     className="p-1 text-slate-400 hover:text-emerald-500 transition-colors"
                                                     title="View Details"
                                                 >
@@ -191,6 +285,29 @@ export default function AdminJobsPage() {
                                 )}
                             </tbody>
                         </table>
+                    </div>
+
+                    {/* Pagination Controls */}
+                    <div className="p-4 border-t border-slate-800 flex items-center justify-between">
+                        <div className="text-sm text-slate-400">
+                            Showing {((page - 1) * limit) + 1} to {Math.min(page * limit, totalJobs)} of {totalJobs} jobs
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setPage(p => Math.max(1, p - 1))}
+                                disabled={page === 1}
+                                className="px-3 py-1 bg-slate-800 border border-slate-700 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 transition-colors"
+                            >
+                                Previous
+                            </button>
+                            <button
+                                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                disabled={page === totalPages}
+                                className="px-3 py-1 bg-slate-800 border border-slate-700 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 transition-colors"
+                            >
+                                Next
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -220,7 +337,7 @@ export default function AdminJobsPage() {
                                     </div>
                                     <div className="flex items-center gap-1">
                                         <Clock className="w-4 h-4" />
-                                        {selectedJob.type || 'Full-time'}
+                                        {selectedJob.job_type || 'Full-time'}
                                     </div>
                                     <div className="flex items-center gap-1">
                                         <DollarSign className="w-4 h-4" />
@@ -233,8 +350,8 @@ export default function AdminJobsPage() {
                                 <div className="p-4 bg-slate-800/50 rounded-lg">
                                     <div className="text-sm text-slate-400 mb-1">Status</div>
                                     <span className={`px-2 py-1 rounded text-xs font-medium ${selectedJob.status === 'OPEN' ? 'bg-green-500/10 text-green-500' :
-                                            selectedJob.status === 'FILLED' ? 'bg-blue-500/10 text-blue-500' :
-                                                'bg-slate-500/10 text-slate-500'
+                                        selectedJob.status === 'FILLED' ? 'bg-blue-500/10 text-blue-500' :
+                                            'bg-slate-500/10 text-slate-500'
                                         }`}>
                                         {selectedJob.status}
                                     </span>
@@ -243,7 +360,45 @@ export default function AdminJobsPage() {
                                     <div className="text-sm text-slate-400 mb-1">Posted On</div>
                                     <div className="font-medium">{new Date(selectedJob.created_at).toLocaleDateString()}</div>
                                 </div>
+                                <div className="p-4 bg-slate-800/50 rounded-lg">
+                                    <div className="text-sm text-slate-400 mb-1">Experience</div>
+                                    <div className="font-medium">
+                                        {selectedJob.experience_min !== undefined && selectedJob.experience_max !== undefined
+                                            ? `${selectedJob.experience_min} - ${selectedJob.experience_max} Years`
+                                            : 'Not specified'}
+                                    </div>
+                                </div>
+                                <div className="p-4 bg-slate-800/50 rounded-lg">
+                                    <div className="text-sm text-slate-400 mb-1">Work Mode</div>
+                                    <div className="font-medium">{selectedJob.work_mode || 'Not specified'}</div>
+                                </div>
                             </div>
+
+                            {selectedJob.skills && selectedJob.skills.length > 0 && (
+                                <div>
+                                    <h4 className="font-medium text-white mb-2">Skills</h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        {selectedJob.skills.map((skill, index) => (
+                                            <span key={index} className="px-2 py-1 bg-slate-800 rounded text-sm text-slate-300">
+                                                {skill}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {selectedJob.benefits && selectedJob.benefits.length > 0 && (
+                                <div>
+                                    <h4 className="font-medium text-white mb-2">Benefits</h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        {selectedJob.benefits.map((benefit, index) => (
+                                            <span key={index} className="px-2 py-1 bg-emerald-500/10 text-emerald-500 rounded text-sm">
+                                                {benefit}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             <div>
                                 <h4 className="font-medium text-white mb-2">Description</h4>

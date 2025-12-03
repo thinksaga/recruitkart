@@ -19,42 +19,76 @@ export async function GET(request: NextRequest) {
         }
 
         const { searchParams } = new URL(request.url);
+        const page = parseInt(searchParams.get('page') || '1');
+        const limit = parseInt(searchParams.get('limit') || '10');
+        const search = searchParams.get('search') || '';
         const status = searchParams.get('status');
         const role = searchParams.get('role');
+        const sortBy = searchParams.get('sortBy') || 'created_at';
+        const sortOrder = (searchParams.get('sortOrder') || 'desc') as 'asc' | 'desc';
+
+        const skip = (page - 1) * limit;
 
         const where: any = {};
-        if (status) where.verification_status = status;
-        if (role) where.role = role;
 
-        const users = await prisma.user.findMany({
-            where,
-            orderBy: { created_at: 'desc' },
-            select: {
-                id: true,
-                email: true,
-                role: true,
-                verification_status: true,
-                created_at: true,
-                organization: {
-                    select: {
-                        id: true,
-                        name: true,
-                        gstin: true,
-                        domain: true,
-                        website: true,
+        if (status && status !== 'ALL') where.verification_status = status;
+        if (role && role !== 'ALL') where.role = role;
+
+        if (search) {
+            where.OR = [
+                { email: { contains: search, mode: 'insensitive' } },
+                { phone: { contains: search, mode: 'insensitive' } },
+                { organization: { name: { contains: search, mode: 'insensitive' } } },
+            ];
+        }
+
+        const [users, total] = await Promise.all([
+            prisma.user.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: { [sortBy]: sortOrder },
+                select: {
+                    id: true,
+                    email: true,
+                    role: true,
+                    verification_status: true,
+                    created_at: true,
+                    phone: true,
+                    avatar_url: true,
+                    last_login_at: true,
+                    is_active: true,
+                    organization: {
+                        select: {
+                            id: true,
+                            name: true,
+                            gstin: true,
+                            domain: true,
+                            website: true,
+                            logo_url: true,
+                        },
+                    },
+                    tas_profile: {
+                        select: {
+                            pan_number: true,
+                            linkedin_url: true,
+                            credits_balance: true,
+                        },
                     },
                 },
-                tas_profile: {
-                    select: {
-                        pan_number: true,
-                        linkedin_url: true,
-                        credits_balance: true,
-                    },
-                },
-            },
+            }),
+            prisma.user.count({ where }),
+        ]);
+
+        return NextResponse.json({
+            users,
+            pagination: {
+                total,
+                pages: Math.ceil(total / limit),
+                page,
+                limit,
+            }
         });
-
-        return NextResponse.json({ users });
     } catch (error) {
         console.error('Get users error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

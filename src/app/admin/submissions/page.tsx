@@ -25,6 +25,7 @@ interface Submission {
     candidate: {
         full_name: string;
         email: string;
+        phone?: string;
     };
     job: {
         title: string;
@@ -35,8 +36,10 @@ interface Submission {
     tas: {
         user: {
             email: string;
+            phone?: string;
         };
     };
+    interviews?: any[];
 }
 
 export default function AdminSubmissionsPage() {
@@ -49,18 +52,43 @@ export default function AdminSubmissionsPage() {
     // Modal State
     const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
 
-    useEffect(() => {
-        const delayDebounceFn = setTimeout(() => {
-            fetchSubmissions();
-        }, 500);
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalSubmissions, setTotalSubmissions] = useState(0);
+    const [sortBy, setSortBy] = useState('created_at');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-        return () => clearTimeout(delayDebounceFn);
-    }, [searchTerm, statusFilter]);
+    // Debounce Search
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchTerm);
+            setPage(1);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
+    useEffect(() => {
+        setPage(1);
+    }, [statusFilter]);
+
+    useEffect(() => {
+        fetchSubmissions();
+    }, [page, limit, debouncedSearch, statusFilter, sortBy, sortOrder]);
 
     const fetchSubmissions = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`/api/admin/submissions?search=${searchTerm}&status=${statusFilter}`);
+            const params = new URLSearchParams({
+                page: page.toString(),
+                limit: limit.toString(),
+                search: debouncedSearch,
+                status: statusFilter,
+                sortBy,
+                sortOrder
+            });
+            const res = await fetch(`/api/admin/submissions?${params}`);
             if (!res.ok) {
                 if (res.status === 401 || res.status === 403) {
                     router.push('/login');
@@ -69,10 +97,33 @@ export default function AdminSubmissionsPage() {
             }
             const data = await res.json();
             setSubmissions(data.submissions || []);
+            setTotalPages(data.pagination.pages);
+            setTotalSubmissions(data.pagination.total);
         } catch (error) {
             console.error('Error fetching submissions:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleSort = (field: string) => {
+        if (sortBy === field) {
+            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortBy(field);
+            setSortOrder('desc');
+        }
+    };
+
+    const handleViewDetails = async (submissionId: string) => {
+        try {
+            const res = await fetch(`/api/admin/submissions/${submissionId}`);
+            if (!res.ok) throw new Error('Failed to fetch submission details');
+            const data = await res.json();
+            setSelectedSubmission(data.submission);
+        } catch (error) {
+            console.error('Error fetching submission details:', error);
+            alert('Failed to fetch submission details');
         }
     };
 
@@ -90,6 +141,22 @@ export default function AdminSubmissionsPage() {
                     </button>
                     <h1 className="text-4xl font-bold mb-2">Submissions</h1>
                     <p className="text-slate-400">Track and manage candidate submissions</p>
+                </div>
+
+                {/* Stats Row */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
+                        <div className="text-2xl font-bold">{totalSubmissions}</div>
+                        <div className="text-sm text-slate-400">Total Submissions</div>
+                    </div>
+                    <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
+                        <div className="text-2xl font-bold text-emerald-500">{page}</div>
+                        <div className="text-sm text-slate-400">Current Page</div>
+                    </div>
+                    <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
+                        <div className="text-2xl font-bold text-blue-500">{totalPages}</div>
+                        <div className="text-sm text-slate-400">Total Pages</div>
+                    </div>
                 </div>
 
                 {/* Filters */}
@@ -131,8 +198,18 @@ export default function AdminSubmissionsPage() {
                                     <th className="text-left py-4 px-6 text-slate-300 font-medium">Candidate</th>
                                     <th className="text-left py-4 px-6 text-slate-300 font-medium">Job</th>
                                     <th className="text-left py-4 px-6 text-slate-300 font-medium">Submitted By</th>
-                                    <th className="text-left py-4 px-6 text-slate-300 font-medium">Status</th>
-                                    <th className="text-left py-4 px-6 text-slate-300 font-medium">Date</th>
+                                    <th
+                                        className="text-left py-4 px-6 text-slate-300 font-medium cursor-pointer hover:text-white"
+                                        onClick={() => handleSort('status')}
+                                    >
+                                        Status {sortBy === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
+                                    </th>
+                                    <th
+                                        className="text-left py-4 px-6 text-slate-300 font-medium cursor-pointer hover:text-white"
+                                        onClick={() => handleSort('created_at')}
+                                    >
+                                        Date {sortBy === 'created_at' && (sortOrder === 'asc' ? '↑' : '↓')}
+                                    </th>
                                     <th className="text-left py-4 px-6 text-slate-300 font-medium">Actions</th>
                                 </tr>
                             </thead>
@@ -152,7 +229,11 @@ export default function AdminSubmissionsPage() {
                                     </tr>
                                 ) : (
                                     submissions.map((sub) => (
-                                        <tr key={sub.id} className="border-b border-slate-800/50 hover:bg-slate-800/50">
+                                        <tr
+                                            key={sub.id}
+                                            className="border-b border-slate-800/50 hover:bg-slate-800/50 cursor-pointer transition-colors"
+                                            onClick={() => handleViewDetails(sub.id)}
+                                        >
                                             <td className="py-4 px-6">
                                                 <div className="font-medium">{sub.candidate.full_name}</div>
                                                 <div className="text-sm text-slate-400">{sub.candidate.email}</div>
@@ -169,8 +250,8 @@ export default function AdminSubmissionsPage() {
                                             </td>
                                             <td className="py-4 px-6">
                                                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${sub.status === 'ACCEPTED' ? 'bg-green-500/10 text-green-500' :
-                                                        sub.status === 'REJECTED' ? 'bg-red-500/10 text-red-500' :
-                                                            'bg-yellow-500/10 text-yellow-500'
+                                                    sub.status === 'REJECTED' ? 'bg-red-500/10 text-red-500' :
+                                                        'bg-yellow-500/10 text-yellow-500'
                                                     }`}>
                                                     {sub.status}
                                                 </span>
@@ -178,9 +259,9 @@ export default function AdminSubmissionsPage() {
                                             <td className="py-4 px-6 text-slate-400 text-sm">
                                                 {new Date(sub.created_at).toLocaleDateString()}
                                             </td>
-                                            <td className="py-4 px-6">
+                                            <td className="py-4 px-6" onClick={(e) => e.stopPropagation()}>
                                                 <button
-                                                    onClick={() => setSelectedSubmission(sub)}
+                                                    onClick={() => handleViewDetails(sub.id)}
                                                     className="p-1 text-slate-400 hover:text-emerald-500 transition-colors"
                                                     title="View Details"
                                                 >
@@ -192,6 +273,29 @@ export default function AdminSubmissionsPage() {
                                 )}
                             </tbody>
                         </table>
+                    </div>
+
+                    {/* Pagination Controls */}
+                    <div className="p-4 border-t border-slate-800 flex items-center justify-between">
+                        <div className="text-sm text-slate-400">
+                            Showing {((page - 1) * limit) + 1} to {Math.min(page * limit, totalSubmissions)} of {totalSubmissions} submissions
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setPage(p => Math.max(1, p - 1))}
+                                disabled={page === 1}
+                                className="px-3 py-1 bg-slate-800 border border-slate-700 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 transition-colors"
+                            >
+                                Previous
+                            </button>
+                            <button
+                                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                disabled={page === totalPages}
+                                className="px-3 py-1 bg-slate-800 border border-slate-700 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 transition-colors"
+                            >
+                                Next
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -220,6 +324,12 @@ export default function AdminSubmissionsPage() {
                                             <Mail className="w-4 h-4" />
                                             {selectedSubmission.candidate.email}
                                         </div>
+                                        {selectedSubmission.candidate.phone && (
+                                            <div className="flex items-center gap-2 text-sm text-slate-400">
+                                                <Phone className="w-4 h-4" />
+                                                {selectedSubmission.candidate.phone}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                                 <div>
@@ -245,14 +355,20 @@ export default function AdminSubmissionsPage() {
                                             <Mail className="w-4 h-4 text-slate-400" />
                                             {selectedSubmission.tas?.user?.email || 'N/A'}
                                         </div>
+                                        {selectedSubmission.tas?.user?.phone && (
+                                            <div className="flex items-center gap-2 text-sm text-slate-400 mt-1">
+                                                <Phone className="w-4 h-4" />
+                                                {selectedSubmission.tas.user.phone}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                                 <div>
                                     <h4 className="text-sm font-medium text-slate-400 mb-2">Status</h4>
                                     <div className="p-4 bg-slate-800/50 rounded-lg">
                                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${selectedSubmission.status === 'ACCEPTED' ? 'bg-green-500/10 text-green-500' :
-                                                selectedSubmission.status === 'REJECTED' ? 'bg-red-500/10 text-red-500' :
-                                                    'bg-yellow-500/10 text-yellow-500'
+                                            selectedSubmission.status === 'REJECTED' ? 'bg-red-500/10 text-red-500' :
+                                                'bg-yellow-500/10 text-yellow-500'
                                             }`}>
                                             {selectedSubmission.status}
                                         </span>
@@ -267,6 +383,39 @@ export default function AdminSubmissionsPage() {
                                     Submitted on {new Date(selectedSubmission.created_at).toLocaleString()}
                                 </div>
                             </div>
+
+                            {/* Interviews Section */}
+                            {selectedSubmission.interviews && selectedSubmission.interviews.length > 0 && (
+                                <div>
+                                    <h4 className="text-lg font-bold text-white mb-4">Interview History</h4>
+                                    <div className="space-y-4">
+                                        {selectedSubmission.interviews.map((interview: any) => (
+                                            <div key={interview.id} className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div>
+                                                        <div className="font-medium text-white">Round {interview.round_number}: {interview.round_type}</div>
+                                                        <div className="text-sm text-slate-400">{new Date(interview.created_at).toLocaleDateString()}</div>
+                                                    </div>
+                                                    <span className={`px-2 py-1 rounded text-xs font-medium ${interview.status === 'COMPLETED' ? 'bg-green-500/10 text-green-500' :
+                                                        interview.status === 'SCHEDULED' ? 'bg-blue-500/10 text-blue-500' :
+                                                            'bg-slate-500/10 text-slate-500'
+                                                        }`}>
+                                                        {interview.status}
+                                                    </span>
+                                                </div>
+                                                {interview.outcome && (
+                                                    <div className="mt-2 text-sm">
+                                                        <span className="text-slate-400">Outcome: </span>
+                                                        <span className={interview.outcome === 'PASSED' ? 'text-green-500' : interview.outcome === 'FAILED' ? 'text-red-500' : 'text-yellow-500'}>
+                                                            {interview.outcome}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

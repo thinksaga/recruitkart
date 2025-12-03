@@ -31,6 +31,9 @@ async function main() {
             password_hash: passwordHash,
             role: UserRole.ADMIN,
             verification_status: 'VERIFIED',
+            phone: '+1234567890',
+            is_active: true,
+            preferences: { theme: 'dark', notifications: true },
         },
     });
     console.log('✅ Created Admin:', adminUser.email);
@@ -42,6 +45,8 @@ async function main() {
             password_hash: passwordHash,
             role: UserRole.SUPPORT,
             verification_status: 'VERIFIED',
+            phone: '+1234567891',
+            is_active: true,
         },
     });
     console.log('✅ Created Support:', supportUser.email);
@@ -53,6 +58,8 @@ async function main() {
             password_hash: passwordHash,
             role: UserRole.OPERATOR,
             verification_status: 'VERIFIED',
+            phone: '+1234567892',
+            is_active: true,
         },
     });
     console.log('✅ Created Operator:', operatorUser.email);
@@ -63,6 +70,22 @@ async function main() {
             name: 'Acme Corp',
             domain: 'acme.com',
             website: 'https://acme.com',
+            description: 'Leading provider of road runner catching solutions.',
+            industry: 'Manufacturing',
+            size: '500+',
+            founded_year: 1950,
+            address: {
+                street: '123 Canyon Road',
+                city: 'Desert City',
+                state: 'Arizona',
+                country: 'USA',
+                zip: '85001'
+            },
+            social_links: {
+                linkedin: 'https://linkedin.com/company/acme',
+                twitter: 'https://twitter.com/acme'
+            },
+            branding_color: '#ef4444', // Red-500
         },
     });
 
@@ -73,6 +96,8 @@ async function main() {
             role: UserRole.COMPANY_ADMIN,
             verification_status: 'VERIFIED',
             organization_id: org.id,
+            phone: '+1234567893',
+            is_active: true,
         },
     });
     console.log('✅ Created Company:', org.name);
@@ -85,6 +110,8 @@ async function main() {
             role: UserRole.COMPANY_MEMBER,
             verification_status: 'VERIFIED',
             organization_id: org.id,
+            phone: '+1234567894',
+            is_active: true,
         },
     });
     console.log('✅ Created Company Member:', companyMember.email);
@@ -97,6 +124,8 @@ async function main() {
             role: UserRole.INTERVIEWER,
             verification_status: 'VERIFIED',
             organization_id: org.id,
+            phone: '+1234567895',
+            is_active: true,
         },
     });
     console.log('✅ Created Interviewer:', interviewer.email);
@@ -109,6 +138,8 @@ async function main() {
             role: UserRole.DECISION_MAKER,
             verification_status: 'VERIFIED',
             organization_id: org.id,
+            phone: '+1234567896',
+            is_active: true,
         },
     });
     console.log('✅ Created Decision Maker:', decisionMaker.email);
@@ -120,6 +151,8 @@ async function main() {
             password_hash: passwordHash,
             role: UserRole.TAS,
             verification_status: 'VERIFIED',
+            phone: '+1234567897',
+            is_active: true,
         },
     });
 
@@ -139,6 +172,8 @@ async function main() {
             password_hash: passwordHash,
             role: UserRole.CANDIDATE,
             verification_status: 'VERIFIED',
+            phone: '+919876543210',
+            is_active: true,
         },
     });
 
@@ -155,7 +190,7 @@ async function main() {
                 ctc: '2500000',
                 expected_ctc: '3500000',
             },
-            summary: 'Experienced Full Stack Developer with a focus on React and Node.js ecosystem.',
+            bio: 'Experienced Full Stack Developer with a focus on React and Node.js ecosystem.',
             years_of_experience: 5.5,
             experience: {
                 create: [

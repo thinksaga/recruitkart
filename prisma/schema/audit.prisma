@@ -6,6 +6,12 @@ model AuditLog {
   entity_id   String?
   details     Json?
   ip_address  String?
+  user_agent  String?
+  resource_url String?
+  old_values  Json?
+  new_values  Json?
+  status      String?
+  metadata    Json?
   created_at  DateTime @default(now())
 
   // Relations

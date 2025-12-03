@@ -7,11 +7,27 @@ import { z } from 'zod';
 const profileSchema = z.object({
     full_name: z.string().min(2),
     phone: z.string().min(10),
-    summary: z.string().optional(),
+    bio: z.string().optional(),
+    dob: z.string().optional().nullable(), // ISO Date string
+    gender: z.string().optional(),
+    nationality: z.string().optional(),
+    address: z.string().optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
+    country: z.string().optional(),
+    zip_code: z.string().optional(),
     years_of_experience: z.number().optional(),
+    current_ctc: z.number().optional(),
+    expected_ctc: z.number().optional(),
+    notice_period: z.string().optional(),
     resume_url: z.string().optional(),
     skills_primary: z.array(z.string()),
     skills_secondary: z.array(z.string()),
+    preferred_locations: z.array(z.string()).optional(),
+    willing_to_relocate: z.boolean().optional(),
+    languages_known: z.array(z.string()).optional(),
+
+    // Keep for backward compatibility if needed, but primary fields are above
     personal_details: z.object({
         current_location: z.string().optional(),
         preferred_locations: z.array(z.string()).optional(),
@@ -120,7 +136,10 @@ export async function PUT(req: Request) {
             // Update main candidate details
             const updatedCandidate = await tx.candidate.update({
                 where: { user_id: payload.userId as string },
-                data: candidateData,
+                data: {
+                    ...candidateData,
+                    dob: candidateData.dob ? new Date(candidateData.dob) : null,
+                },
             });
 
             // Handle Experience

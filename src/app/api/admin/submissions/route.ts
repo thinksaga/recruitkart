@@ -25,6 +25,9 @@ export async function GET(request: NextRequest) {
         const limit = parseInt(searchParams.get('limit') || '20');
         const skip = (page - 1) * limit;
 
+        const sortBy = searchParams.get('sortBy') || 'created_at';
+        const sortOrder = searchParams.get('sortOrder') || 'desc';
+
         const where: any = {};
         if (status && status !== 'ALL') where.status = status;
 
@@ -41,7 +44,7 @@ export async function GET(request: NextRequest) {
                 where,
                 skip,
                 take: limit,
-                orderBy: { created_at: 'desc' },
+                orderBy: { [sortBy]: sortOrder },
                 include: {
                     candidate: {
                         select: {

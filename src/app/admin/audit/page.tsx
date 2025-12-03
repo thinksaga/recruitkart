@@ -56,6 +56,7 @@ export default function AdminAuditPage() {
                                         <th className="text-left py-4 px-6 text-slate-300 font-medium">User</th>
                                         <th className="text-left py-4 px-6 text-slate-300 font-medium">Action</th>
                                         <th className="text-left py-4 px-6 text-slate-300 font-medium">Entity</th>
+                                        <th className="text-left py-4 px-6 text-slate-300 font-medium">Status</th>
                                         <th className="text-left py-4 px-6 text-slate-300 font-medium">Details</th>
                                     </tr>
                                 </thead>
@@ -84,7 +85,15 @@ export default function AdminAuditPage() {
                                             <td className="py-4 px-6 text-sm">
                                                 <span className="text-slate-400">{log.entity_type}:</span> {log.entity_id}
                                             </td>
+                                            <td className="py-4 px-6 text-sm">
+                                                <span className={`px-2 py-1 rounded text-xs font-medium ${log.status === 'FAILURE' ? 'bg-red-500/10 text-red-500' :
+                                                        'bg-green-500/10 text-green-500'
+                                                    }`}>
+                                                    {log.status || 'SUCCESS'}
+                                                </span>
+                                            </td>
                                             <td className="py-4 px-6 text-sm text-slate-400 max-w-xs truncate">
+                                                {log.ip_address && <span className="mr-2 text-xs bg-slate-800 px-1 rounded">{log.ip_address}</span>}
                                                 {JSON.stringify(log.details)}
                                             </td>
                                         </tr>

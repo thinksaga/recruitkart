@@ -46,24 +46,6 @@ export async function GET() {
             prisma.job.count({ where: { status: 'OPEN' } }),
         ]);
 
-        // Get recent users
-        const recentUsers = await prisma.user.findMany({
-            take: 10,
-            orderBy: { created_at: 'desc' },
-            select: {
-                id: true,
-                email: true,
-                role: true,
-                verification_status: true,
-                created_at: true,
-                organization: {
-                    select: {
-                        name: true,
-                    },
-                },
-            },
-        });
-
         const responseData = {
             stats: {
                 totalUsers,
@@ -74,7 +56,6 @@ export async function GET() {
                 totalJobs,
                 openJobs,
             },
-            recentUsers,
         };
 
         await cache.set(cacheKey, responseData, 60); // Cache for 1 minute

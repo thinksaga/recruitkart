@@ -21,7 +21,11 @@ export async function GET(req: Request) {
 
         const { searchParams } = new URL(req.url);
         const search = searchParams.get('search');
-        const status = searchParams.get('status');
+        const page = parseInt(searchParams.get('page') || '1');
+        const limit = parseInt(searchParams.get('limit') || '10');
+        const sortBy = searchParams.get('sortBy') || 'created_at';
+        const sortOrder = searchParams.get('sortOrder') || 'desc';
+        const skip = (page - 1) * limit;
 
         const where: any = {};
 
@@ -36,19 +40,37 @@ export async function GET(req: Request) {
             where.status = status;
         }
 
-        const jobs = await prisma.job.findMany({
-            where,
-            orderBy: { created_at: 'desc' },
-            include: {
-                organization: {
-                    select: {
-                        name: true,
+        const [jobs, total] = await Promise.all([
+            prisma.job.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: { [sortBy]: sortOrder },
+                include: {
+                    organization: {
+                        select: {
+                            name: true,
+                        },
                     },
+                    _count: {
+                        select: {
+                            submissions: true
+                        }
+                    }
                 },
-            },
-        });
+            }),
+            prisma.job.count({ where })
+        ]);
 
-        return NextResponse.json({ jobs });
+        return NextResponse.json({
+            jobs,
+            pagination: {
+                total,
+                pages: Math.ceil(total / limit),
+                page,
+                limit
+            }
+        });
     } catch (error) {
         console.error('Get jobs error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

@@ -8,13 +8,31 @@ model Candidate {
   identity_hash String? // For fuzzy deduplication
 
   // Profile Details
-  summary             String? // Bio / Objective
+  bio                 String? // Bio / Objective
+  dob                 DateTime?
+  gender              String?
+  nationality         String?
+  address             String?
+  city                String?
+  state               String?
+  country             String?
+  zip_code            String?
+  
   years_of_experience Float?  @default(0)
+  current_ctc         Float?
+  expected_ctc        Float?
+  notice_period       String?
+  
   resume_url          String? // Link to original file
   
   // Structured Data (Replacing generic JSON)
-  personal_details  Json? // { current_location, preferred_locations, notice_period, ctc... }
+  personal_details  Json? // Keep for backward compatibility or extra fields
   social_links      Json? // { linkedin, github, portfolio... }
+
+  // Preferences
+  preferred_locations String[]
+  willing_to_relocate Boolean @default(false)
+  languages_known     String[]
 
   // Search Optimization
   skills_primary   String[] // Top 5 skills for indexing

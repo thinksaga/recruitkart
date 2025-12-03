@@ -20,6 +20,11 @@ export async function GET(req: Request) {
 
         const { searchParams } = new URL(req.url);
         const search = searchParams.get('search');
+        const page = parseInt(searchParams.get('page') || '1');
+        const limit = parseInt(searchParams.get('limit') || '10');
+        const sortBy = searchParams.get('sortBy') || 'created_at';
+        const sortOrder = searchParams.get('sortOrder') || 'desc';
+        const skip = (page - 1) * limit;
 
         const where: any = {};
         if (search) {
@@ -30,20 +35,33 @@ export async function GET(req: Request) {
             ];
         }
 
-        const organizations = await prisma.organization.findMany({
-            where,
-            orderBy: { created_at: 'desc' },
-            include: {
-                _count: {
-                    select: {
-                        users: true,
-                        jobs: true,
+        const [organizations, total] = await Promise.all([
+            prisma.organization.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: { [sortBy]: sortOrder },
+                include: {
+                    _count: {
+                        select: {
+                            users: true,
+                            jobs: true,
+                        },
                     },
                 },
-            },
-        });
+            }),
+            prisma.organization.count({ where })
+        ]);
 
-        return NextResponse.json({ organizations });
+        return NextResponse.json({
+            organizations,
+            pagination: {
+                total,
+                pages: Math.ceil(total / limit),
+                page,
+                limit
+            }
+        });
     } catch (error) {
         console.error('Get organizations error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -66,7 +84,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { name, domain, website, gstin } = body;
+        const { name, domain, website, gstin, description, industry, size, founded_year, address, social_links, branding_color } = body;
 
         if (!name) {
             return NextResponse.json({ error: 'Name is required' }, { status: 400 });
@@ -78,6 +96,13 @@ export async function POST(req: Request) {
                 domain,
                 website,
                 gstin,
+                description,
+                industry,
+                size,
+                founded_year: founded_year ? parseInt(founded_year) : undefined,
+                address,
+                social_links,
+                branding_color,
             },
         });
 
