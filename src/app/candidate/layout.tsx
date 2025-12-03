@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { ReactNode } from 'react';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import {
     LayoutDashboard,
@@ -11,9 +12,10 @@ import {
     LogOut,
     Menu,
     X,
-    Briefcase
+    Briefcase,
+    ChevronDown
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface CandidateLayoutProps {
     children: ReactNode;
@@ -23,6 +25,8 @@ export default function CandidateLayout({ children }: CandidateLayoutProps) {
     const pathname = usePathname();
     const router = useRouter();
     const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [user, setUser] = useState<{ name: string; email: string } | null>(null);
 
     const navigation = [
         { name: 'Dashboard', href: '/candidate', icon: LayoutDashboard },
@@ -30,6 +34,26 @@ export default function CandidateLayout({ children }: CandidateLayoutProps) {
         { name: 'Applications', href: '/candidate/applications', icon: FileText },
         { name: 'Interviews', href: '/candidate/interviews', icon: Calendar },
     ];
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const res = await fetch('/api/candidate/profile');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.profile) {
+                        setUser({
+                            name: data.profile.full_name,
+                            email: data.profile.email
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching profile:', error);
+            }
+        };
+        fetchProfile();
+    }, []);
 
     const handleLogout = async () => {
         try {
@@ -57,8 +81,14 @@ export default function CandidateLayout({ children }: CandidateLayoutProps) {
                 {/* Logo */}
                 <div className="p-6 border-b border-slate-800/50">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-teal-500 rounded-lg flex items-center justify-center shadow-lg shadow-cyan-500/20">
-                            <Briefcase className="w-5 h-5 text-white" />
+                        <div className="w-10 h-10 relative flex items-center justify-center">
+                            <Image
+                                src="/logo.png"
+                                alt="Recruitkart Logo"
+                                width={40}
+                                height={40}
+                                className="object-contain rounded-full"
+                            />
                         </div>
                         <div>
                             <h1 className="text-xl font-bold bg-gradient-to-r from-white to-cyan-200 bg-clip-text text-transparent">
@@ -93,23 +123,12 @@ export default function CandidateLayout({ children }: CandidateLayoutProps) {
                         })}
                     </div>
                 </nav>
-
-                {/* Logout */}
-                <div className="p-4 border-t border-slate-800/50">
-                    <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all"
-                    >
-                        <LogOut className="w-5 h-5" />
-                        <span className="font-medium">Logout</span>
-                    </button>
-                </div>
             </motion.aside>
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Top Bar */}
-                <header className="relative z-10 h-16 bg-slate-900/30 backdrop-blur-xl border-b border-slate-800/50 flex items-center justify-between px-6">
+                <header className="relative z-30 h-16 bg-slate-900/30 backdrop-blur-xl border-b border-slate-800/50 flex items-center justify-between px-6">
                     <button
                         onClick={() => setSidebarOpen(!sidebarOpen)}
                         className="p-2 hover:bg-slate-800/50 rounded-lg transition-colors"
@@ -121,14 +140,35 @@ export default function CandidateLayout({ children }: CandidateLayoutProps) {
                         )}
                     </button>
 
-                    <div className="flex items-center gap-4">
-                        <div className="text-right">
-                            <p className="text-sm font-medium text-white">John Doe</p>
-                            <p className="text-xs text-slate-400">john@doe.com</p>
-                        </div>
-                        <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-teal-500 rounded-full flex items-center justify-center">
-                            <span className="text-white font-bold text-sm">J</span>
-                        </div>
+                    <div className="relative">
+                        <button
+                            onClick={() => setDropdownOpen(!dropdownOpen)}
+                            className="flex items-center gap-4 hover:bg-slate-800/50 p-2 rounded-lg transition-colors"
+                        >
+                            <div className="text-right hidden sm:block">
+                                <p className="text-sm font-medium text-white">{user?.name || 'Loading...'}</p>
+                                <p className="text-xs text-slate-400">{user?.email || ''}</p>
+                            </div>
+                            <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-teal-500 rounded-full flex items-center justify-center">
+                                <span className="text-white font-bold text-sm">
+                                    {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                                </span>
+                            </div>
+                            <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {dropdownOpen && (
+                            <div className="absolute right-0 top-full mt-2 w-48 bg-slate-900 border border-slate-800 rounded-xl shadow-xl overflow-hidden">
+                                <button
+                                    id="logout-button"
+                                    onClick={handleLogout}
+                                    className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all text-sm"
+                                >
+                                    <LogOut className="w-4 h-4" />
+                                    <span className="font-medium">Logout</span>
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </header>
 

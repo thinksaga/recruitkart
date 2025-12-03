@@ -64,12 +64,12 @@ export default async function proxy(req: NextRequest) {
 
     // 4. Check Verification Status
     // If user is PENDING, they should only access /verification-pending (and public routes)
-    if (payload.verification_status === 'PENDING' && pathname !== '/verification-pending') {
+    if (payload.verificationStatus === 'PENDING' && pathname !== '/verification-pending') {
         return NextResponse.redirect(new URL('/verification-pending', req.url));
     }
 
     // If user is VERIFIED but tries to go to /verification-pending, redirect to their dashboard
-    if (payload.verification_status === 'VERIFIED' && pathname === '/verification-pending') {
+    if (payload.verificationStatus === 'VERIFIED' && pathname === '/verification-pending') {
         return NextResponse.redirect(new URL(getDashboardRoute(payload.role as string), req.url));
     }
 

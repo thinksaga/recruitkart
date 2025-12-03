@@ -9,6 +9,8 @@ export default function CandidateDashboard() {
     const [stats, setStats] = useState({
         activeApplications: 0,
         interviews: 0,
+        profileCompletion: 0,
+        profileViews: 0,
     });
     const [recentApplications, setRecentApplications] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -18,18 +20,14 @@ export default function CandidateDashboard() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const res = await fetch('/api/candidate/applications');
+                const res = await fetch('/api/candidate/dashboard');
                 if (!res.ok) {
                     const errData = await res.json().catch(() => ({}));
                     throw new Error(errData.error || `Failed to fetch data: ${res.status}`);
                 }
                 const data = await res.json();
-                const apps = data.applications || [];
-                setRecentApplications(apps.slice(0, 3));
-                setStats({
-                    activeApplications: apps.filter((a: any) => !['HIRED', 'REJECTED'].includes(a.status)).length,
-                    interviews: apps.filter((a: any) => a.status === 'INTERVIEWING').length,
-                });
+                setRecentApplications(data.recentApplications || []);
+                setStats(data.stats);
             } catch (error: any) {
                 console.error('Error fetching dashboard data:', error);
                 setError(error.message);
@@ -42,10 +40,10 @@ export default function CandidateDashboard() {
     }, []);
 
     const statCards = [
-        { name: 'Profile Completion', value: '85%', icon: User, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
+        { name: 'Profile Completion', value: `${stats.profileCompletion}%`, icon: User, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
         { name: 'Active Applications', value: stats.activeApplications.toString(), icon: FileText, color: 'text-teal-500', bg: 'bg-teal-500/10' },
         { name: 'Upcoming Interviews', value: stats.interviews.toString(), icon: Calendar, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-        { name: 'Profile Views', value: '24', icon: Eye, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+        { name: 'Profile Views', value: stats.profileViews.toString(), icon: Eye, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
     ];
 
     return (

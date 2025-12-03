@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { ReactNode } from 'react';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import {
     LayoutDashboard,
@@ -67,8 +68,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     {/* Logo */}
                     <div className="p-6 border-b border-slate-800/50">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                                <Shield className="w-5 h-5 text-white" />
+                            <div className="w-10 h-10 relative flex items-center justify-center">
+                                <Image
+                                    src="/logo.png"
+                                    alt="Recruitkart Logo"
+                                    width={40}
+                                    height={40}
+                                    className="object-contain rounded-full"
+                                />
                             </div>
                             <div>
                                 <h1 className="text-xl font-bold bg-gradient-to-r from-white to-emerald-200 bg-clip-text text-transparent">

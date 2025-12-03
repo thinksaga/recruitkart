@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Loader2, AlertCircle, Building2, UserCheck } from 'lucide-react';
+import { Loader2, AlertCircle, Building2, UserCheck, Briefcase, Eye, EyeOff } from 'lucide-react';
 import AuthLayout from '@/components/auth/AuthLayout';
 import { UserRole } from '@prisma/client';
 
@@ -45,8 +45,19 @@ const tasSchema = z.object({
     path: ["confirmPassword"],
 });
 
+// Candidate Schema
+const candidateSchema = z.object({
+    ...baseFields,
+    role: z.literal(UserRole.CANDIDATE),
+    fullName: z.string().min(1, 'Full name is required'),
+    phoneNumber: z.string().regex(/^[6-9]\d{9}$/, 'Invalid phone number (10 digits starting with 6-9)'),
+}).refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+});
+
 // Union schema for form validation
-const signupSchema = z.discriminatedUnion('role', [companySchema, tasSchema]);
+const signupSchema = z.discriminatedUnion('role', [companySchema, tasSchema, candidateSchema]);
 
 type SignupFormValues = z.infer<typeof signupSchema>;
 
@@ -55,6 +66,8 @@ export default function SignupPage() {
     const [role, setRole] = useState<UserRole | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const {
         register,
@@ -68,7 +81,7 @@ export default function SignupPage() {
         }
     });
 
-    const handleRoleSelect = (selectedRole: typeof UserRole.COMPANY_ADMIN | typeof UserRole.TAS) => {
+    const handleRoleSelect = (selectedRole: typeof UserRole.COMPANY_ADMIN | typeof UserRole.TAS | typeof UserRole.CANDIDATE) => {
         setRole(selectedRole);
         setValue('role', selectedRole);
     };
@@ -84,12 +97,22 @@ export default function SignupPage() {
                 body: JSON.stringify(data),
             });
 
-            if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.error || 'Signup failed');
+            let responseData;
+            try {
+                responseData = await res.json();
+            } catch (e) {
+                throw new Error('Failed to parse response');
             }
 
-            router.push('/verification-pending');
+            if (!res.ok) {
+                throw new Error(responseData.error || 'Signup failed');
+            }
+
+            if (responseData.role === UserRole.CANDIDATE) {
+                router.push('/login');
+            } else {
+                router.push('/verification-pending');
+            }
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -120,6 +143,15 @@ export default function SignupPage() {
                         <UserCheck className="w-8 h-8 text-indigo-500 mb-4 group-hover:scale-110 transition-transform" />
                         <h3 className="text-lg font-semibold text-white">I am a Recruiter (TAS)</h3>
                         <p className="text-sm text-slate-400 mt-1">Monetizing my network.</p>
+                    </button>
+
+                    <button
+                        onClick={() => handleRoleSelect(UserRole.CANDIDATE)}
+                        className="p-6 bg-slate-900 border border-slate-800 rounded-lg hover:border-cyan-500 hover:bg-slate-800 transition-all group text-left"
+                    >
+                        <Briefcase className="w-8 h-8 text-cyan-500 mb-4 group-hover:scale-110 transition-transform" />
+                        <h3 className="text-lg font-semibold text-white">I am a Candidate</h3>
+                        <p className="text-sm text-slate-400 mt-1">Looking for jobs.</p>
                     </button>
                 </div>
             ) : (
@@ -155,24 +187,42 @@ export default function SignupPage() {
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-slate-200">Password</label>
-                            <input
-                                {...register('password')}
-                                type="password"
-                                className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                                placeholder="••••••••"
-                            />
+                            <div className="relative">
+                                <input
+                                    {...register('password')}
+                                    type={showPassword ? "text" : "password"}
+                                    className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent pr-10"
+                                    placeholder="••••••••"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                                >
+                                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
+                            </div>
                             {errors.password && (
                                 <p className="text-xs text-red-400">{errors.password.message}</p>
                             )}
                         </div>
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-slate-200">Confirm</label>
-                            <input
-                                {...register('confirmPassword')}
-                                type="password"
-                                className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                                placeholder="••••••••"
-                            />
+                            <div className="relative">
+                                <input
+                                    {...register('confirmPassword')}
+                                    type={showConfirmPassword ? "text" : "password"}
+                                    className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent pr-10"
+                                    placeholder="••••••••"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                                >
+                                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
+                            </div>
                             {errors.confirmPassword && (
                                 <p className="text-xs text-red-400">{errors.confirmPassword.message}</p>
                             )}
@@ -188,8 +238,8 @@ export default function SignupPage() {
                                     className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                                     placeholder="Acme Corp"
                                 />
-                                {errors.companyName && (
-                                    <p className="text-xs text-red-400">{errors.companyName.message}</p>
+                                {'companyName' in errors && (errors as any).companyName && (
+                                    <p className="text-xs text-red-400">{(errors as any).companyName.message}</p>
                                 )}
                             </div>
 
@@ -202,8 +252,8 @@ export default function SignupPage() {
                                         placeholder="22AAAAA0000A1Z5"
                                         maxLength={15}
                                     />
-                                    {'gstin' in errors && errors.gstin && (
-                                        <p className="text-xs text-red-400">{errors.gstin.message}</p>
+                                    {'gstin' in errors && (errors as any).gstin && (
+                                        <p className="text-xs text-red-400">{(errors as any).gstin.message}</p>
                                     )}
                                 </div>
 
@@ -214,8 +264,8 @@ export default function SignupPage() {
                                         className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                                         placeholder="acme.com"
                                     />
-                                    {'domain' in errors && errors.domain && (
-                                        <p className="text-xs text-red-400">{errors.domain.message}</p>
+                                    {'domain' in errors && (errors as any).domain && (
+                                        <p className="text-xs text-red-400">{(errors as any).domain.message}</p>
                                     )}
                                 </div>
                             </div>
@@ -228,8 +278,8 @@ export default function SignupPage() {
                                     className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                                     placeholder="https://acme.com"
                                 />
-                                {'website' in errors && errors.website && (
-                                    <p className="text-xs text-red-400">{errors.website.message}</p>
+                                {'website' in errors && (errors as any).website && (
+                                    <p className="text-xs text-red-400">{(errors as any).website.message}</p>
                                 )}
                             </div>
 
@@ -241,8 +291,8 @@ export default function SignupPage() {
                                         className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                                         placeholder="John Doe"
                                     />
-                                    {'contactPerson' in errors && errors.contactPerson && (
-                                        <p className="text-xs text-red-400">{errors.contactPerson.message}</p>
+                                    {'contactPerson' in errors && (errors as any).contactPerson && (
+                                        <p className="text-xs text-red-400">{(errors as any).contactPerson.message}</p>
                                     )}
                                 </div>
 
@@ -253,8 +303,8 @@ export default function SignupPage() {
                                         className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                                         placeholder="HR Manager"
                                     />
-                                    {'designation' in errors && errors.designation && (
-                                        <p className="text-xs text-red-400">{errors.designation.message}</p>
+                                    {'designation' in errors && (errors as any).designation && (
+                                        <p className="text-xs text-red-400">{(errors as any).designation.message}</p>
                                     )}
                                 </div>
                             </div>
@@ -270,8 +320,8 @@ export default function SignupPage() {
                                     className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                                     placeholder="John Doe"
                                 />
-                                {'fullName' in errors && errors.fullName && (
-                                    <p className="text-xs text-red-400">{errors.fullName.message}</p>
+                                {'fullName' in errors && (errors as any).fullName && (
+                                    <p className="text-xs text-red-400">{(errors as any).fullName.message}</p>
                                 )}
                             </div>
 
@@ -284,8 +334,8 @@ export default function SignupPage() {
                                         placeholder="ABCDE1234F"
                                         maxLength={10}
                                     />
-                                    {errors.panNumber && (
-                                        <p className="text-xs text-red-400">{errors.panNumber.message}</p>
+                                    {'panNumber' in errors && (errors as any).panNumber && (
+                                        <p className="text-xs text-red-400">{(errors as any).panNumber.message}</p>
                                     )}
                                 </div>
 
@@ -298,8 +348,8 @@ export default function SignupPage() {
                                         placeholder="9876543210"
                                         maxLength={10}
                                     />
-                                    {'phoneNumber' in errors && errors.phoneNumber && (
-                                        <p className="text-xs text-red-400">{errors.phoneNumber.message}</p>
+                                    {'phoneNumber' in errors && (errors as any).phoneNumber && (
+                                        <p className="text-xs text-red-400">{(errors as any).phoneNumber.message}</p>
                                     )}
                                 </div>
                             </div>
@@ -312,8 +362,38 @@ export default function SignupPage() {
                                     className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                                     placeholder="https://linkedin.com/in/yourprofile"
                                 />
-                                {'linkedinUrl' in errors && errors.linkedinUrl && (
-                                    <p className="text-xs text-red-400">{errors.linkedinUrl.message}</p>
+                                {'linkedinUrl' in errors && (errors as any).linkedinUrl && (
+                                    <p className="text-xs text-red-400">{(errors as any).linkedinUrl.message}</p>
+                                )}
+                            </div>
+                        </>
+                    )}
+
+                    {role === UserRole.CANDIDATE && (
+                        <>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-slate-200">Full Name *</label>
+                                <input
+                                    {...register('fullName')}
+                                    className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                                    placeholder="John Doe"
+                                />
+                                {'fullName' in errors && (errors as any).fullName && (
+                                    <p className="text-xs text-red-400">{(errors as any).fullName.message}</p>
+                                )}
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-slate-200">Phone Number *</label>
+                                <input
+                                    {...register('phoneNumber')}
+                                    type="tel"
+                                    className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                                    placeholder="9876543210"
+                                    maxLength={10}
+                                />
+                                {'phoneNumber' in errors && errors.phoneNumber && (
+                                    <p className="text-xs text-red-400">{errors.phoneNumber.message}</p>
                                 )}
                             </div>
                         </>

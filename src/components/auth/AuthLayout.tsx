@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { ShieldCheck } from 'lucide-react';
 
 interface AuthLayoutProps {
@@ -17,7 +18,13 @@ export default function AuthLayout({ children, title, subtitle }: AuthLayoutProp
 
                 <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-8">
-                        <ShieldCheck className="w-8 h-8 text-emerald-500" />
+                        <Image
+                            src="/logo.png"
+                            alt="Recruitkart Logo"
+                            width={48}
+                            height={48}
+                            className="object-contain rounded-full"
+                        />
                         <span className="text-2xl font-bold tracking-tight">Recruitkart</span>
                     </div>
                 </div>

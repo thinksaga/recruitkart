@@ -9,16 +9,18 @@ import { z } from 'zod';
 const signupSchema = z.object({
     email: z.string().email(),
     password: z.string().min(8),
-    role: z.enum([UserRole.COMPANY_ADMIN, UserRole.TAS]),
+    role: z.enum([UserRole.COMPANY_ADMIN, UserRole.TAS, UserRole.CANDIDATE]),
     // Optional fields for profile creation
     companyName: z.string().optional(),
     panNumber: z.string().optional(),
+    fullName: z.string().optional(),
+    phoneNumber: z.string().optional(),
 });
 
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { email, password, role, companyName, panNumber } = signupSchema.parse(body);
+        const { email, password, role, companyName, panNumber, fullName, phoneNumber } = signupSchema.parse(body);
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -29,7 +31,7 @@ export async function POST(req: Request) {
                     email,
                     password_hash: hashedPassword,
                     role,
-                    verification_status: 'PENDING', // Default status
+                    verification_status: role === UserRole.CANDIDATE ? 'VERIFIED' : 'PENDING',
                 },
             });
 
@@ -41,12 +43,6 @@ export async function POST(req: Request) {
                         users: { connect: { id: user.id } }, // Connect user to organization
                     },
                 });
-                // Update user with organization_id is handled by the relation, but explicit update might be needed if not using nested connect in Organization create
-                // Actually, Organization.users is a one-to-many. User has organization_id.
-                // Let's do it the other way: Create Organization first? No, User first is fine, then update User or create Organization with user connection.
-                // Better: Create Organization and connect User.
-                // Wait, User has organization_id. Organization has users[].
-                // So creating Organization with `users: { connect: { id: user.id } }` works.
             } else if (role === UserRole.TAS) {
                 if (!panNumber) throw new Error('PAN Number is required for TAS');
                 await tx.tASProfile.create({
@@ -55,12 +51,41 @@ export async function POST(req: Request) {
                         pan_number: panNumber,
                     },
                 });
+            } else if (role === UserRole.CANDIDATE) {
+                if (!fullName || !phoneNumber) throw new Error('Full Name and Phone Number are required for Candidate');
+                await tx.candidate.create({
+                    data: {
+                        user_id: user.id,
+                        full_name: fullName,
+                        phone: phoneNumber,
+                        email: email, // Candidate schema has email field
+                    },
+                });
             }
         });
 
-        return NextResponse.json({ message: 'User created successfully. Verification pending.' }, { status: 201 });
+        return NextResponse.json({
+            message: 'User created successfully.',
+            role: role,
+            verification_status: role === UserRole.CANDIDATE ? 'VERIFIED' : 'PENDING'
+        }, { status: 201 });
     } catch (error: any) {
         console.error('Signup Error:', error);
+        if (error.code === 'P2002') {
+            const target = error.meta?.target;
+            if (Array.isArray(target)) {
+                if (target.includes('email')) {
+                    return NextResponse.json({ error: 'Email already exists' }, { status: 400 });
+                }
+                if (target.includes('phone')) {
+                    return NextResponse.json({ error: 'Phone number already exists' }, { status: 400 });
+                }
+                if (target.includes('pan_number')) {
+                    return NextResponse.json({ error: 'PAN number already exists' }, { status: 400 });
+                }
+            }
+            return NextResponse.json({ error: 'A record with this information already exists' }, { status: 400 });
+        }
         return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 400 });
     }
 }

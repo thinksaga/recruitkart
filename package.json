@@ -13,9 +13,7 @@
     "db:migrate": "DATABASE_URL=\"postgresql://postgres:postgres@localhost:5432/recruitkart?schema=public\" npx prisma migrate dev",
     "db:seed": "DATABASE_URL=\"postgresql://postgres:postgres@localhost:5432/recruitkart?schema=public\" npx tsx scripts/seed.ts",
     "db:reset": "DATABASE_URL=\"postgresql://postgres:postgres@localhost:5432/recruitkart?schema=public\" npx prisma migrate reset",
-    "db:studio": "DATABASE_URL=\"postgresql://postgres:postgres@localhost:5432/recruitkart?schema=public\" npx prisma studio",
-    "create:admin": "DATABASE_URL=\"postgresql://postgres:postgres@localhost:5432/recruitkart?schema=public\" npx tsx scripts/create-admin.ts",
-    "test:api": "npx tsx scripts/test-api.ts"
+    "db:studio": "DATABASE_URL=\"postgresql://postgres:postgres@localhost:5432/recruitkart?schema=public\" npx prisma studio"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.940.0",
