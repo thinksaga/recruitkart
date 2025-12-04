@@ -5,7 +5,7 @@ const path = require('path');
 console.log('🚀 Starting Recruitkart Development Setup...');
 
 // 0. Auto-create .env if missing
-const envPath = path.join(__dirname, '../.env');
+const envPath = path.join(__dirname, '../.env.local');
 if (!fs.existsSync(envPath)) {
     console.log('📝 .env file not found. Creating with default development values...');
     const defaultEnvContent = `# Database
@@ -38,14 +38,14 @@ try {
     // 1. Stop existing containers
     console.log('🐳 Stopping any running containers...');
     try {
-        execSync('docker-compose down', { stdio: 'inherit' });
+        execSync('docker-compose -p recruitkart_dev down', { stdio: 'inherit' });
     } catch (e) {
         // Ignore errors if no containers are running
     }
 
     // 2. Start Development Stack
     console.log('🏗️  Starting Development Stack...');
-    execSync('docker-compose up -d', { stdio: 'inherit' });
+    execSync('docker-compose -p recruitkart_dev up -d', { stdio: 'inherit' });
 
     // 3. Wait for DB
     console.log('⏳ Waiting for Database to be ready...');
@@ -69,11 +69,13 @@ try {
 
     // 4. Run Migrations
     console.log('🔄 Running Database Migrations...');
-    execSync('npx prisma migrate dev', { stdio: 'inherit' });
+    // Force Dev DB URL to avoid picking up Prod credentials from .env
+    const devDbUrl = "postgresql://postgres:postgres@localhost:5432/recruitkart?schema=public";
+    execSync(`DATABASE_URL="${devDbUrl}" npx prisma migrate dev`, { stdio: 'inherit' });
 
     // 5. Seed Database
     console.log('🌱 Seeding Database...');
-    execSync('npm run db:seed', { stdio: 'inherit' });
+    execSync(`DATABASE_URL="${devDbUrl}" npm run db:seed`, { stdio: 'inherit' });
 
     console.log('\n✅ Development Setup Complete!');
     console.log('------------------------------------------------');

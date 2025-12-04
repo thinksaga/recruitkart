@@ -7,15 +7,14 @@ try {
     // 1. Stop existing containers
     console.log('🐳 Stopping any running containers...');
     try {
-        execSync('docker-compose down', { stdio: 'inherit' });
-        execSync('docker-compose -f docker-compose.prod.yml down', { stdio: 'inherit' });
+        execSync('docker-compose -p recruitkart_prod -f docker-compose.prod.yml down', { stdio: 'inherit' });
     } catch (e) {
         // Ignore errors if no containers are running
     }
 
     // 2. Start Production Stack
     console.log('🏗️  Building and Starting Production Stack...');
-    execSync('docker-compose -f docker-compose.prod.yml up -d --build', { stdio: 'inherit' });
+    execSync('docker-compose -p recruitkart_prod -f docker-compose.prod.yml up -d --build', { stdio: 'inherit' });
 
     // 3. Wait for DB
     console.log('⏳ Waiting for Production Database to be ready...');
