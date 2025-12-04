@@ -125,7 +125,8 @@ recruitkart_app/
    ```
    This will:
    - Install dependencies
-   - Start Docker services (PostgreSQL, Redis, MinIO)
+   - **Auto-create `.env`** with default development values (if missing)
+   - Start Docker services (PostgreSQL, Redis, MinIO) in an **isolated environment** (`recruitkart_dev`)
    - Run database migrations
    - Seed the database with test users
 
@@ -139,11 +140,20 @@ recruitkart_app/
 
 ### Production Setup
 
+You can run the production environment **simultaneously** with development.
+
 ```bash
 npm run setup:prod
-npm run build
-npm start
 ```
+
+This will:
+- Start the production stack (`recruitkart_prod`) on distinct ports.
+- Run migrations and seed the Admin user.
+- Output the Admin credentials.
+
+**Access Production:**
+- App: [http://localhost:4000](http://localhost:4000)
+- MinIO Console: [http://localhost:9003](http://localhost:9003)
 
 ## 👥 Test Users
 
@@ -221,19 +231,24 @@ npx playwright test tests/company-job-posting.spec.ts
 
 The project uses Docker Compose for local development:
 
-- **PostgreSQL** (port 5432) - Primary database
-- **Redis** (port 6379) - Caching and rate limiting
-- **MinIO** (port 9000) - Object storage
+### Development (`recruitkart_dev`)
+- **App**: Port 3000
+- **PostgreSQL**: Port 5432
+- **Redis**: Port 6379
+- **MinIO**: Port 9000 (API), 9001 (Console)
+
+### Production (`recruitkart_prod`)
+- **App**: Port 4000
+- **PostgreSQL**: Port 5433
+- **Redis**: Internal only
+- **MinIO**: Port 9002 (API), 9003 (Console)
 
 ```bash
-# Start services
-docker-compose up -d
+# Start dev services
+npm run setup
 
-# Stop services
-docker-compose down
-
-# Stop and remove volumes
-docker-compose down -v
+# Start prod services
+npm run setup:prod
 ```
 
 ## 🤝 Contributing
