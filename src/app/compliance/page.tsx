@@ -49,9 +49,9 @@ export default function Compliance() {
                     {/* Certifications */}
                     <div className="grid md:grid-cols-3 gap-8 mb-20">
                         {[
-                            { title: "SOC 2 Type II", desc: "Audited annually for security, availability, and confidentiality.", icon: <Shield className="w-8 h-8 text-indigo-400" /> },
-                            { title: "GDPR Compliant", desc: "Full compliance with EU data protection regulations.", icon: <Lock className="w-8 h-8 text-indigo-400" /> },
-                            { title: "ISO 27001", desc: "Certified information security management system.", icon: <CheckCircle className="w-8 h-8 text-indigo-400" /> }
+                            { title: "Security Architecture", desc: "Built following industry-standard security principles for availability and confidentiality.", icon: <Shield className="w-8 h-8 text-indigo-400" /> },
+                            { title: "Data Protection", desc: "Comprehensive data privacy measures aligned with global standards.", icon: <Lock className="w-8 h-8 text-indigo-400" /> },
+                            { title: "Information Security", desc: "Enterprise-grade information security management practices.", icon: <CheckCircle className="w-8 h-8 text-indigo-400" /> }
                         ].map((cert, i) => (
                             <div key={i} className="bg-slate-900/50 border border-white/10 p-8 rounded-2xl hover:bg-slate-900 transition-colors">
                                 <div className="mb-6">{cert.icon}</div>
@@ -67,10 +67,10 @@ export default function Compliance() {
                             <h2 className="text-3xl font-bold text-white mb-8">Legal & Privacy</h2>
                             <div className="space-y-4">
                                 {[
-                                    { name: "Terms of Service", date: "Last updated: Dec 2024" },
-                                    { name: "Privacy Policy", date: "Last updated: Dec 2024" },
-                                    { name: "Data Processing Agreement (DPA)", date: "Last updated: Nov 2024" },
-                                    { name: "Cookie Policy", date: "Last updated: Nov 2024" }
+                                    { name: "Terms of Service", date: "Last updated: Nov 2024" },
+                                    { name: "Privacy Policy", date: "Last updated: Nov 2024" },
+                                    { name: "Data Processing Agreement (DPA)", date: "Last updated: Oct 2024" },
+                                    { name: "Cookie Policy", date: "Last updated: Oct 2024" }
                                 ].map((policy, i) => (
                                     <div key={i} className="flex items-center justify-between p-4 bg-slate-900/30 border border-white/5 rounded-xl hover:bg-slate-900 hover:border-indigo-500/30 transition-all">
                                         <div className="flex items-center gap-4">

@@ -1,26 +1,25 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Lock, Video, CheckCircle, ArrowRight, Wallet, Users, Building2, Briefcase, Activity, FileCheck, Zap } from 'lucide-react';
 import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import Link from 'next/link';
+import { getHomepageStats } from './actions/get-homepage-stats';
+import { getRecentJobs } from './actions/get-recent-jobs';
 
 // --- Utility for Tailwind classes ---
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
 
-// --- Components ---
-
-import Link from 'next/link';
-
 const Navbar = () => (
-  <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 backdrop-blur-md bg-slate-950/50 border-b border-white/10">
+  <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 sm:px-6 py-4 backdrop-blur-md bg-slate-950/50 border-b border-white/10">
     <Link href="/" className="flex items-center gap-2">
-      <Image src="/logo.png" alt="Recruitkart Logo" width={40} height={40} className="rounded-full" />
-      <span className="text-xl font-bold text-white tracking-tight">Recruitkart</span>
+      <Image src="/logo.png" alt="Recruitkart Logo" width={32} height={32} className="rounded-full sm:w-10 sm:h-10" />
+      <span className="text-lg sm:text-xl font-bold text-white tracking-tight">Recruitkart</span>
     </Link>
     <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
       <Link href="/for-companies" className="hover:text-white transition-colors">For Companies</Link>
@@ -42,35 +41,35 @@ const HeroSection = () => {
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/20 rounded-full blur-[128px] animate-pulse" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-[128px] animate-pulse delay-1000" />
 
-      <div className="container mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center relative z-10">
+      <div className="container mx-auto px-4 sm:px-6 grid lg:grid-cols-2 gap-8 lg:gap-12 items-center relative z-10">
         {/* Left: Copy */}
         <motion.div
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="space-y-8"
+          className="space-y-6 lg:space-y-8 text-center lg:text-left"
         >
-          <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
             The <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-emerald-400">Operating System</span> <br />
             for Hiring.
           </h1>
-          <p className="text-lg text-slate-400 max-w-lg">
+          <p className="text-base sm:text-lg text-slate-400 max-w-lg mx-auto lg:mx-0">
             The first Trustless Recruitment Protocol. We replace agency commissions with a flat utility fee. Verified Companies post jobs for ₹999. Verified Recruiters (TAS) earn 99% of the Success Fee.
           </p>
-          <div className="flex flex-wrap gap-4">
-            <Link href="/login" className="px-8 py-4 text-lg font-bold text-white bg-white/10 backdrop-blur-md border border-white/20 rounded-xl hover:bg-white/20 transition-all flex items-center gap-2 group">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+            <Link href="/login" className="px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-bold text-white bg-white/10 backdrop-blur-md border border-white/20 rounded-xl hover:bg-white/20 transition-all flex items-center justify-center gap-2 group">
               Get Started
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
-            <button className="px-8 py-4 text-lg font-bold text-slate-300 hover:text-white transition-colors flex items-center gap-2">
-              <Video className="w-5 h-5" />
-              Watch Demo
-            </button>
+            <Link href="/pricing" className="px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-bold text-indigo-400 hover:text-indigo-300 transition-colors flex items-center justify-center gap-2">
+              View Pricing
+              <ArrowRight className="w-5 h-5" />
+            </Link>
           </div>
         </motion.div>
 
         {/* Right: Floating UI Composite */}
-        <div className="relative h-[600px] w-full perspective-1000">
+        <div className="relative h-[400px] sm:h-[500px] lg:h-[600px] w-full perspective-1000 hidden lg:block">
           <motion.div
             className="relative w-full h-full transform-style-3d"
             initial={{ rotateY: 15, rotateX: 5 }}
@@ -143,16 +142,72 @@ const HeroSection = () => {
   );
 };
 
-const LiveTicker = () => {
-  const updates = [
-    "Escrow #9921: ₹1,20,000 Deposited (Bangalore)",
-    "New TAS Verified: P. Kumar (PAN: *****1234)",
-    "Payout Released: ₹45,500 to TAS ID #882",
-    "Job #3312: Product Manager @ Zomato (Live)",
-    "Escrow #9924: ₹80,000 Deposited (Mumbai)",
-    "New TAS Verified: A. Singh (PAN: *****9876)",
-    "Candidate Locked: +91-98****1234 (48h Timer)"
+const StatsSection = () => {
+  const [stats, setStats] = useState({
+    tvl: "Loading...",
+    recruiters: "...",
+    companies: "...",
+    jobs: "..."
+  });
+
+  useEffect(() => {
+    getHomepageStats().then(setStats);
+  }, []);
+
+  const statItems = [
+    { value: stats.tvl, label: "Total Value Locked", icon: <Wallet className="w-6 h-6 text-indigo-400" /> },
+    { value: stats.recruiters, label: "Active Recruiters", icon: <Users className="w-6 h-6 text-emerald-400" /> },
+    { value: stats.companies, label: "Companies Hiring", icon: <Building2 className="w-6 h-6 text-purple-400" /> },
+    { value: stats.jobs, label: "Jobs Posted", icon: <Briefcase className="w-6 h-6 text-blue-400" /> }
   ];
+
+  return (
+    <section className="py-12 sm:py-16 lg:py-20 bg-slate-900/30 border-y border-white/5">
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+          {statItems.map((stat, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+              className="text-center"
+            >
+              <div className="flex justify-center mb-3">{stat.icon}</div>
+              <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-1">{stat.value}</div>
+              <div className="text-xs sm:text-sm text-slate-400">{stat.label}</div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const LiveTicker = () => {
+  const [updates, setUpdates] = useState<string[]>([
+    "Protocol Live: Monitoring Transactions...",
+    "Waiting for new blocks...",
+    "Syncing with Escrow Smart Contract..."
+  ]);
+
+  useEffect(() => {
+    getRecentJobs().then(jobs => {
+      if (jobs.length > 0) {
+        const jobUpdates = jobs.map(job => `New Job: ${job.title} @ ${job.company} (${job.location})`);
+        // Mix with some generic protocol messages if not enough jobs
+        const mixedUpdates = [
+          ...jobUpdates,
+          "Escrow Protocol Active",
+          "TAS Verification Node Online",
+          "Zero-Knowledge Proofs Enabled"
+        ];
+        setUpdates(mixedUpdates);
+      }
+    });
+  }, []);
+
   return (
     <div className="w-full bg-slate-950 border-y border-white/5 py-4 overflow-hidden relative">
       <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-slate-950 to-transparent z-10" />
@@ -161,9 +216,9 @@ const LiveTicker = () => {
       <motion.div
         className="flex gap-16 items-center whitespace-nowrap"
         animate={{ x: ["0%", "-50%"] }}
-        transition={{ repeat: Infinity, duration: 30, ease: "linear" }}
+        transition={{ repeat: Infinity, duration: 40, ease: "linear" }}
       >
-        {[...updates, ...updates].map((update, i) => (
+        {[...updates, ...updates, ...updates].map((update, i) => (
           <div key={i} className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span className="text-sm font-mono font-medium text-slate-400 uppercase tracking-wider">
@@ -180,15 +235,15 @@ const LiveProtocol = () => {
   const steps = [
     {
       id: 1,
-      title: "Identity Lock",
-      desc: "TAS submits candidate via Phone Number Primary Key. Candidate is cryptographically locked to the recruiter for 48 hours.",
+      title: "Search & Consent",
+      desc: "TAS searches by phone number. If found, instant submission triggers consent. If new, TAS builds profile and invites candidate.",
       icon: <Users className="w-6 h-6 text-indigo-400" />,
       image: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?q=80&w=1000&auto=format&fit=crop"
     },
     {
       id: 2,
       title: "Evidence Layer",
-      desc: "No PDF Resumes. We use structured data and mandatory Zoom-recorded interviews stored in our secure vault.",
+      desc: "We replace PDF resumes with structured Candidate Profiles. Virtual interviews are conducted and recorded directly on the Recruitkart platform.",
       icon: <FileCheck className="w-6 h-6 text-emerald-400" />,
       image: "https://images.unsplash.com/photo-1639322537228-f710d846310a"
     },
@@ -242,6 +297,75 @@ const LiveProtocol = () => {
                   <p className="text-sm text-slate-400 leading-relaxed">{step.desc}</p>
                 </div>
               </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const FeaturesGrid = () => {
+  const features = [
+    {
+      icon: <Shield className="w-8 h-8" />,
+      title: "Escrow Protection",
+      desc: "Success fees locked in smart contracts. Auto-release on Day 91 of candidate tenure."
+    },
+    {
+      icon: <Lock className="w-8 h-8" />,
+      title: "Consent-Based Access",
+      desc: "No phone numbers or emails shared without approval. Candidates explicitly consent to every submission."
+    },
+    {
+      icon: <Video className="w-8 h-8" />,
+      title: "Verified Evidence",
+      desc: "Structured Candidate Profiles and recorded virtual interviews provide a transparent, verifiable history."
+    },
+    {
+      icon: <Zap className="w-8 h-8" />,
+      title: "Instant Verification",
+      desc: "PAN-based KYC for all users. Verified badge for companies and recruiters."
+    },
+    {
+      icon: <Activity className="w-8 h-8" />,
+      title: "Real-Time Tracking",
+      desc: "Live dashboard showing escrow status, candidate pipeline, and payout timeline."
+    },
+    {
+      icon: <FileCheck className="w-8 h-8" />,
+      title: "Compliance Ready",
+      desc: "Full audit trail for every transaction. Built with enterprise-grade security best practices."
+    }
+  ];
+
+  return (
+    <section className="py-16 sm:py-20 lg:py-24 bg-slate-950">
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="text-center mb-12 sm:mb-16">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
+            Built for <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-emerald-400">Trust</span>
+          </h2>
+          <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto">
+            Every feature designed to eliminate fraud, protect funds, and ensure fair compensation.
+          </p>
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+          {features.map((feature, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+              className="bg-slate-900/50 border border-white/10 rounded-2xl p-6 sm:p-8 hover:border-indigo-500/30 transition-all group"
+            >
+              <div className="w-14 h-14 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400 mb-4 group-hover:bg-indigo-500/20 transition-colors">
+                {feature.icon}
+              </div>
+              <h3 className="text-lg sm:text-xl font-bold text-white mb-2">{feature.title}</h3>
+              <p className="text-sm sm:text-base text-slate-400 leading-relaxed">{feature.desc}</p>
             </motion.div>
           ))}
         </div>
@@ -378,9 +502,38 @@ const DualSidedExperience = () => {
   );
 };
 
+const TrustIndicators = () => {
+  return (
+    <section className="py-12 sm:py-16 bg-slate-950 border-y border-white/5">
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-12 lg:gap-16 flex-wrap">
+          <div className="flex items-center gap-3">
+            <CheckCircle className="w-6 h-6 text-emerald-400" />
+            <span className="text-sm sm:text-base text-slate-300 font-medium">Full Audit Trail</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <CheckCircle className="w-6 h-6 text-emerald-400" />
+            <span className="text-sm sm:text-base text-slate-300 font-medium">Data Privacy</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <CheckCircle className="w-6 h-6 text-emerald-400" />
+            <span className="text-sm sm:text-base text-slate-300 font-medium">Secure Transactions</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <Shield className="w-6 h-6 text-indigo-400" />
+            <span className="text-sm sm:text-base text-slate-300 font-medium">Bank-Grade Security</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+
+
 const Footer = () => (
   <footer className="bg-slate-950 py-12 border-t border-white/10">
-    <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+    <div className="container mx-auto px-4 sm:px-6 flex flex-col md:flex-row justify-between items-center gap-6">
       <div className="flex items-center gap-2">
         <Image src="/logo.png" alt="Logo" width={32} height={32} className="rounded-full grayscale opacity-50" />
         <span className="text-slate-500 font-bold">Recruitkart Protocol</span>
@@ -395,10 +548,13 @@ export default function Home() {
     <main className="min-h-screen bg-slate-950 text-white selection:bg-indigo-500/30">
       <Navbar />
       <HeroSection />
+      <StatsSection />
       <LiveTicker />
       <LiveProtocol />
+      <FeaturesGrid />
       <ComparisonMatrix />
       <DualSidedExperience />
+      <TrustIndicators />
       <Footer />
     </main>
   );
