@@ -4,7 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { MapPin, Globe, ShieldCheck, Zap, CheckCircle, Users, Target, Heart, ArrowRight, Code, Lock, Cpu } from 'lucide-react';
+import { MapPin, Globe, ShieldCheck, Zap, CheckCircle, Target, ArrowRight, Code, Lock, Cpu } from 'lucide-react';
 
 const Navbar = () => (
     <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 backdrop-blur-md bg-slate-950/50 border-b border-white/10">
@@ -95,7 +95,7 @@ export default function About() {
                             Recruitkart was born from a shared frustration. As founders, we were tired of paying 20% commissions to agencies that added little value. As candidates, we were tired of being ghosted and treated like commodities.
                         </p>
                         <p>
-                            We realized that the problem wasn't the people—it was the incentives. The traditional model creates a zero-sum game where agencies hide talent to protect their fees, and companies hoard information to protect their leverage.
+                            We realized that the problem wasn&apos;t the people—it was the incentives. The traditional model creates a zero-sum game where agencies hide talent to protect their fees, and companies hoard information to protect their leverage.
                         </p>
                         <p>
                             We asked a simple question: <span className="text-white font-semibold">What if we could replace the middleman with a protocol?</span>
@@ -167,7 +167,7 @@ export default function About() {
                         <div className="order-1 md:order-2">
                             <h2 className="text-3xl md:text-4xl font-bold mb-6">Powered by Code, Not Promises</h2>
                             <p className="text-lg text-slate-400 mb-8">
-                                We use smart contracts to automate the trust layer. This ensures that every interaction is transparent, verifiable, and immutable. No more "he said, she said"—just code execution.
+                                We use smart contracts to automate the trust layer. This ensures that every interaction is transparent, verifiable, and immutable. No more &quot;he said, she said&quot;—just code execution.
                             </p>
                             <ul className="space-y-4">
                                 {[

@@ -4,7 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Shield, CheckCircle, Video, ArrowRight, Building2, Lock, Users, Zap, DollarSign, Clock, FileCheck } from 'lucide-react';
+import { Shield, CheckCircle, ArrowRight, Building2, Lock, Users, DollarSign, Clock, FileCheck } from 'lucide-react';
 
 const Navbar = () => (
     <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 backdrop-blur-md bg-slate-950/50 border-b border-white/10">
