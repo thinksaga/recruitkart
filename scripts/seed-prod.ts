@@ -12,7 +12,8 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
     console.log('🌱 Starting production seed (Admin only)...');
 
-    const passwordHash = await bcrypt.hash('RectruitK@rt#15Aug', 10);
+    const adminPassword = process.env.ADMIN_PASSWORD || 'RecruitK@rt#15Aug';
+    const passwordHash = await bcrypt.hash(adminPassword, 10);
 
     // Create or Update Platform Admin
     const adminUser = await prisma.user.upsert({

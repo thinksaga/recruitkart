@@ -1,4 +1,5 @@
 const { execSync } = require('child_process');
+require('dotenv').config();
 
 console.log('🚀 Starting Recruitkart Production Setup...');
 
@@ -23,7 +24,8 @@ try {
 
     // 4. Run Migrations
     console.log('🔄 Running Database Migrations on Production DB...');
-    const prodDbUrl = 'postgresql://postgres:postgres@localhost:5433/recruitkart?schema=public';
+    const { POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB } = process.env;
+    const prodDbUrl = `postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5433/${POSTGRES_DB}?schema=public`;
     execSync(`DATABASE_URL="${prodDbUrl}" npx prisma migrate deploy`, { stdio: 'inherit' });
 
     // 5. Seed Database (Admin Only)
@@ -34,7 +36,7 @@ try {
     console.log('------------------------------------------------');
     console.log('Admin Credentials:');
     console.log('Email: ceo@recruitkart.com');
-    console.log('Password: RectruitK@rt#15Aug'); // Assuming this is the default from seed.ts
+    console.log('Password: (See ADMIN_PASSWORD in .env)');
     console.log('------------------------------------------------');
     console.log('App is running at: http://localhost:3000');
     console.log('Cloudflare Tunnel is active.');
