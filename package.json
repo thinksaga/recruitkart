@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "setup": "node scripts/setup.js",
+    "setup": "node scripts/setup-dev.js",
     "setup:prod": "node scripts/setup-prod.js",
     "clean": "node scripts/clean.js",
     "db:migrate": "npx prisma migrate dev",
