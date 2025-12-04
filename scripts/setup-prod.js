@@ -39,7 +39,7 @@ try {
     console.log('Email: ceo@recruitkart.com');
     console.log('Password: (See ADMIN_PASSWORD in .env)');
     console.log('------------------------------------------------');
-    console.log('App is running at: http://localhost:3000');
+    console.log('App is running at: http://localhost:4000');
     console.log('Cloudflare Tunnel is active.');
 
 } catch (error) {
