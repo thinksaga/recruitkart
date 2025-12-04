@@ -21,7 +21,7 @@ export async function POST(req: Request) {
         // Create TAS Profile
         await prisma.tASProfile.create({
             data: {
-                user_id: payload.userId,
+                user_id: payload.userId as string,
                 pan_number: panNumber,
                 pan_file_url: panFileUrl,
             },
