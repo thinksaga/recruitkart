@@ -25,7 +25,9 @@ try {
     // 4. Run Migrations
     console.log('🔄 Running Database Migrations on Production DB...');
     const { POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB } = process.env;
-    const prodDbUrl = `postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5433/${POSTGRES_DB}?schema=public`;
+    const encodedUser = encodeURIComponent(POSTGRES_USER);
+    const encodedPassword = encodeURIComponent(POSTGRES_PASSWORD);
+    const prodDbUrl = `postgresql://${encodedUser}:${encodedPassword}@localhost:5433/${POSTGRES_DB}?schema=public`;
     execSync(`DATABASE_URL="${prodDbUrl}" npx prisma migrate deploy`, { stdio: 'inherit' });
 
     // 5. Seed Database (Admin Only)
