@@ -67,6 +67,10 @@ export default function LoginPage() {
                 router.push('/tas');
             } else if (userRole === 'CANDIDATE') {
                 router.push('/candidate');
+            } else if (userRole === 'FINANCIAL_CONTROLLER') {
+                router.push('/dashboard/finance');
+            } else if (userRole === 'COMPLIANCE_OFFICER') {
+                router.push('/dashboard/compliance');
             } else {
                 router.push('/dashboard');
             }

@@ -7,11 +7,32 @@ model Candidate {
   full_name     String
   identity_hash String? // For fuzzy deduplication
 
+  // Profile Details
+  bio                 String? // Bio / Objective
+  dob                 DateTime?
+  gender              String?
+  nationality         String?
+  address             String?
+  city                String?
+  state               String?
+  country             String?
+  zip_code            String?
+  
+  years_of_experience Float?  @default(0)
+  current_ctc         Float?
+  expected_ctc        Float?
+  notice_period       String?
+  
+  resume_url          String? // Link to original file
+  
   // Structured Data (Replacing generic JSON)
-  personal_details  Json? // { current_location, preferred_locations, notice_period, ctc... }
-  work_history      Json? // Array of { company, role, start, end, description... }
-  education_history Json? // Array of { institution, degree, year... }
+  personal_details  Json? // Keep for backward compatibility or extra fields
   social_links      Json? // { linkedin, github, portfolio... }
+
+  // Preferences
+  preferred_locations String[]
+  willing_to_relocate Boolean @default(false)
+  languages_known     String[]
 
   // Search Optimization
   skills_primary   String[] // Top 5 skills for indexing
@@ -21,8 +42,87 @@ model Candidate {
   updated_at DateTime @updatedAt
 
   // Relations
-  submissions Submission[]
+  submissions    Submission[]
+  experience     CandidateExperience[]
+  education      CandidateEducation[]
+  projects       CandidateProject[]
+  certifications CandidateCertification[]
+  languages      CandidateLanguage[]
 
   // Index for fast skill search
   @@index([skills_primary])
+}
+
+model CandidateExperience {
+  id           String    @id @default(uuid())
+  candidate_id String
+  company      String
+  role         String
+  location     String?
+  start_date   DateTime
+  end_date     DateTime? // Null means "Present"
+  is_current   Boolean   @default(false)
+  description  String?   @db.Text
+  skills_used  String[]
+
+  candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
+
+  @@index([candidate_id])
+}
+
+model CandidateEducation {
+  id             String    @id @default(uuid())
+  candidate_id   String
+  institution    String
+  degree         String
+  field_of_study String?
+  start_date     DateTime
+  end_date       DateTime?
+  grade          String? // CGPA / Percentage
+  activities     String?   @db.Text
+
+  candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
+
+  @@index([candidate_id])
+}
+
+model CandidateProject {
+  id           String   @id @default(uuid())
+  candidate_id String
+  title        String
+  description  String?  @db.Text
+  url          String?
+  start_date   DateTime?
+  end_date     DateTime?
+  skills_used  String[]
+
+  candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
+
+  @@index([candidate_id])
+}
+
+model CandidateCertification {
+  id           String    @id @default(uuid())
+  candidate_id String
+  name         String
+  issuer       String
+  issue_date   DateTime
+  expiry_date  DateTime?
+  credential_id String?
+  url          String?
+
+  candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
+
+  @@index([candidate_id])
+}
+
+model CandidateLanguage {
+  id           String @id @default(uuid())
+  candidate_id String
+  language     String
+  proficiency  String // e.g., "Native", "Professional", "Elementary"
+
+  candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
+
+  @@index([candidate_id])
 }

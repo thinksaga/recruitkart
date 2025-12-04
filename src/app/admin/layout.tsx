@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { ReactNode } from 'react';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import {
     LayoutDashboard,
@@ -59,59 +60,67 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
             {/* Sidebar */}
             <motion.aside
-                initial={{ x: -300 }}
-                animate={{ x: sidebarOpen ? 0 : -300 }}
-                className="relative z-20 w-72 bg-slate-900/50 backdrop-blur-xl border-r border-slate-800/50 flex flex-col"
+                initial={{ width: 288 }}
+                animate={{ width: sidebarOpen ? 288 : 0 }}
+                className="relative z-20 bg-slate-900/50 backdrop-blur-xl border-r border-slate-800/50 flex flex-col overflow-hidden"
             >
-                {/* Logo */}
-                <div className="p-6 border-b border-slate-800/50">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                            <Shield className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                            <h1 className="text-xl font-bold bg-gradient-to-r from-white to-emerald-200 bg-clip-text text-transparent">
-                                Recruitkart
-                            </h1>
-                            <p className="text-xs text-slate-400">Admin Panel</p>
+                <div className="w-72 flex flex-col h-full">
+                    {/* Logo */}
+                    <div className="p-6 border-b border-slate-800/50">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 relative flex items-center justify-center">
+                                <Image
+                                    src="/logo.png"
+                                    alt="Recruitkart Logo"
+                                    width={40}
+                                    height={40}
+                                    className="object-contain rounded-full"
+                                />
+                            </div>
+                            <div>
+                                <h1 className="text-xl font-bold bg-gradient-to-r from-white to-emerald-200 bg-clip-text text-transparent">
+                                    Recruitkart
+                                </h1>
+                                <p className="text-xs text-slate-400">Admin Panel</p>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Navigation */}
-                <nav className="flex-1 p-4 overflow-y-auto">
-                    <div className="space-y-1">
-                        {navigation.map((item) => {
-                            const isActive = pathname === item.href;
-                            return (
-                                <button
-                                    key={item.name}
-                                    onClick={() => router.push(item.href)}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive
+                    {/* Navigation */}
+                    <nav className="flex-1 p-4 overflow-y-auto">
+                        <div className="space-y-1">
+                            {navigation.map((item) => {
+                                const isActive = pathname === item.href;
+                                return (
+                                    <button
+                                        key={item.name}
+                                        onClick={() => router.push(item.href)}
+                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive
                                             ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
                                             : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-                                        }`}
-                                >
-                                    <item.icon className="w-5 h-5" />
-                                    <span className="font-medium">{item.name}</span>
-                                    {isActive && (
-                                        <div className="ml-auto w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
-                                    )}
-                                </button>
-                            );
-                        })}
-                    </div>
-                </nav>
+                                            }`}
+                                    >
+                                        <item.icon className="w-5 h-5" />
+                                        <span className="font-medium">{item.name}</span>
+                                        {isActive && (
+                                            <div className="ml-auto w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </nav>
 
-                {/* Logout */}
-                <div className="p-4 border-t border-slate-800/50">
-                    <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all"
-                    >
-                        <LogOut className="w-5 h-5" />
-                        <span className="font-medium">Logout</span>
-                    </button>
+                    {/* Logout */}
+                    <div className="p-4 border-t border-slate-800/50">
+                        <button
+                            onClick={handleLogout}
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all"
+                        >
+                            <LogOut className="w-5 h-5" />
+                            <span className="font-medium">Logout</span>
+                        </button>
+                    </div>
                 </div>
             </motion.aside>
 

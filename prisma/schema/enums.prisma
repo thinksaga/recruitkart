@@ -4,6 +4,8 @@ enum UserRole {
   OPERATOR
   TAS
   CANDIDATE
+  FINANCIAL_CONTROLLER
+  COMPLIANCE_OFFICER
   // Company Roles
   COMPANY_ADMIN
   COMPANY_MEMBER
@@ -62,5 +64,54 @@ enum InvitationStatus {
 
 enum TicketStatus {
   OPEN
+  IN_PROGRESS
   RESOLVED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  VOID
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+enum OrganizationStatus {
+  ACTIVE
+  BLOCKED
+  PENDING_VERIFICATION
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  FREELANCE
+  INTERNSHIP
+}
+
+enum WorkMode {
+  REMOTE
+  ONSITE
+  HYBRID
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TicketCategory {
+  TECHNICAL
+  BILLING
+  ACCOUNT
+  OTHER
 }

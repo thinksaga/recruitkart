@@ -9,7 +9,7 @@ import { Check, HelpCircle, ChevronDown } from 'lucide-react';
 const Navbar = () => (
     <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 backdrop-blur-md bg-slate-950/50 border-b border-white/10">
         <Link href="/" className="flex items-center gap-2">
-            <Image src="/Gemini_Generated_Image_8u0c458u0c458u0c.png" alt="Recruitkart Logo" width={40} height={40} className="rounded-full" />
+            <Image src="/logo.png" alt="Recruitkart Logo" width={40} height={40} className="rounded-full" />
             <span className="text-xl font-bold text-white tracking-tight">Recruitkart</span>
         </Link>
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
@@ -105,6 +105,7 @@ export default function Pricing() {
                                     <HelpCircle className="w-4 h-4 text-slate-400" />
                                     When do I get paid?
                                 </h4>
+                                <p className="text-gray-600">&quot;Recruitkart has transformed how we hire. The transparency and speed are unmatched.&quot;</p>
                                 <p className="text-slate-400 text-sm">Funds are automatically released from the Escrow Smart Contract on Day 91 of the candidate's tenure at the company.</p>
                             </div>
                         </div>

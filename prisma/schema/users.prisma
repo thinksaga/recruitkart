@@ -5,6 +5,20 @@ model User {
   role                UserRole
   verification_status VerificationStatus @default(PENDING)
   organization_id     String?
+  
+  // Verification Flags
+  is_phone_verified   Boolean            @default(false)
+  is_email_verified   Boolean            @default(false)
+  
+  // Profile & Preferences
+  full_name           String?
+  designation         String?
+  phone               String?            @unique
+  avatar_url          String?
+  last_login_at       DateTime?
+  is_active           Boolean            @default(true)
+  preferences         Json?              // UI settings, notification preferences
+
   reset_token         String?
   reset_token_expiry  DateTime?
   created_at          DateTime           @default(now())
@@ -15,15 +29,29 @@ model User {
   tas_profile  TASProfile?
   candidate    Candidate?
   tickets      Ticket[]
+  assigned_tickets Ticket[] @relation("TicketAssignee")
+  audit_logs   AuditLog[]
 }
 
 model Organization {
   id         String   @id @default(uuid())
   name       String
   gstin      String?
+  status     OrganizationStatus @default(ACTIVE)
   domain     String?
   website    String?
   logo_url   String?
+  gst_certificate_url String?
+  
+  // Expanded Details
+  description    String?   @db.Text
+  industry       String?
+  size           String?   // e.g., "1-10", "11-50"
+  founded_year   Int?
+  address        Json?     // { street, city, state, zip, country }
+  social_links   Json?     // { linkedin, twitter, website }
+  branding_color String?   // Hex code
+
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
@@ -31,6 +59,7 @@ model Organization {
   users       User[]
   jobs        Job[]
   invitations Invitation[]
+  invoices    Invoice[]
 }
 
 model Invitation {
@@ -54,6 +83,7 @@ model TASProfile {
   id              String   @id @default(uuid())
   user_id         String   @unique
   pan_number      String   @unique
+  pan_file_url    String?
   linkedin_url    String?
   credits_balance Int      @default(0)
   created_at      DateTime @default(now())
@@ -62,4 +92,6 @@ model TASProfile {
   // Relations
   user        User         @relation(fields: [user_id], references: [id])
   submissions Submission[]
+  transactions CreditTransaction[]
+  payouts     Payout[]
 }

@@ -114,12 +114,12 @@ export default function ForgotPasswordPage() {
                         )}
                     </button>
 
-                    <div className="text-center text-sm text-slate-400">
+                    <p className="text-center text-sm text-gray-600">
                         Remember your password?{' '}
-                        <Link href="/login" className="text-emerald-500 hover:text-emerald-400 font-medium">
-                            Sign in
-                        </Link>
-                    </div>
+                        <a href="/login" className="font-medium text-blue-600 hover:text-blue-500">
+                            Log in
+                        </a>
+                    </p>
                 </form>
             )}
         </AuthLayout>

@@ -5,10 +5,20 @@ model Ticket {
   reason          String
   status          TicketStatus @default(OPEN)
   resolution_note String?
+  
+  // New Fields
+  subject         String       @default("Support Request")
+  priority        TicketPriority @default(MEDIUM)
+  category        TicketCategory @default(OTHER)
+  attachments     String[]
+  assigned_to_id  String?
+
   created_at      DateTime     @default(now())
   updated_at      DateTime     @updatedAt
 
   // Relations
   raised_by   User @relation(fields: [raised_by_id], references: [id])
   related_job Job? @relation(fields: [related_job_id], references: [id])
+  assigned_to User? @relation("TicketAssignee", fields: [assigned_to_id], references: [id])
 }
+

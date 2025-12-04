@@ -1,30 +1,73 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, TrendingUp, Users, Building2, Briefcase, DollarSign, Calendar } from 'lucide-react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { ArrowLeft, TrendingUp, Users, Briefcase, DollarSign, Loader2 } from 'lucide-react';
+import {
+    LineChart,
+    Line,
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    Legend,
+    ResponsiveContainer,
+    PieChart,
+    Pie,
+    Cell
+} from 'recharts';
 
 export default function AdminAnalyticsPage() {
     const router = useRouter();
+    const [data, setData] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Mock data - replace with real API data
-    const userGrowthData = [
-        { month: 'Jan', users: 45, companies: 12, tas: 33 },
-        { month: 'Feb', users: 78, companies: 23, tas: 55 },
-        { month: 'Mar', users: 112, companies: 34, tas: 78 },
-        { month: 'Apr', users: 156, companies: 45, tas: 111 },
-        { month: 'May', users: 203, companies: 58, tas: 145 },
-        { month: 'Jun', users: 267, companies: 72, tas: 195 },
+    useEffect(() => {
+        fetchAnalytics();
+    }, []);
+
+    const fetchAnalytics = async () => {
+        try {
+            const res = await fetch('/api/admin/analytics');
+            if (res.ok) {
+                const analyticsData = await res.json();
+                setData(analyticsData);
+            }
+        } catch (error) {
+            console.error('Error fetching analytics:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-slate-950">
+                <Loader2 className="w-12 h-12 text-emerald-500 animate-spin" />
+            </div>
+        );
+    }
+
+    // Transform data for charts
+    const submissionData = data?.submissionTrends.labels.map((label: string, i: number) => ({
+        name: label,
+        submissions: data.submissionTrends.data[i]
+    }));
+
+    const revenueData = data?.revenueTrends.labels.map((label: string, i: number) => ({
+        name: label,
+        revenue: data.revenueTrends.data[i]
+    }));
+
+    const userDistributionData = [
+        { name: 'Companies', value: data?.userDistribution.company },
+        { name: 'TAS', value: data?.userDistribution.tas },
+        { name: 'Candidates', value: data?.userDistribution.candidate },
     ];
 
-    const jobStatsData = [
-        { month: 'Jan', posted: 15, filled: 8 },
-        { month: 'Feb', posted: 28, filled: 15 },
-        { month: 'Mar', posted: 42, filled: 24 },
-        { month: 'Apr', posted: 56, filled: 31 },
-        { month: 'May', posted: 73, filled: 45 },
-        { month: 'Jun', posted: 91, filled: 58 },
-    ];
+    const COLORS = ['#10b981', '#6366f1', '#f59e0b'];
 
     return (
         <div className="min-h-screen bg-slate-950 text-white p-8">
@@ -37,100 +80,105 @@ export default function AdminAnalyticsPage() {
                         <ArrowLeft className="w-4 h-4" />
                         Back to Dashboard
                     </button>
-                    <h1 className="text-4xl font-bold mb-2">Analytics & Insights</h1>
-                    <p className="text-slate-400">Platform performance metrics and trends</p>
+                    <h1 className="text-4xl font-bold mb-2">Platform Analytics</h1>
+                    <p className="text-slate-400">Insights into platform performance and growth</p>
                 </div>
 
-                {/* KPI Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    {/* Submission Trends */}
                     <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <Users className="w-8 h-8 text-blue-500" />
-                            <span className="text-green-500 text-sm font-medium">+23%</span>
+                        <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+                            <TrendingUp className="w-5 h-5 text-emerald-500" />
+                            Submission Trends
+                        </h3>
+                        <div className="h-80">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={submissionData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                                    <XAxis dataKey="name" stroke="#94a3b8" />
+                                    <YAxis stroke="#94a3b8" />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#fff' }}
+                                    />
+                                    <Line type="monotone" dataKey="submissions" stroke="#10b981" strokeWidth={2} />
+                                </LineChart>
+                            </ResponsiveContainer>
                         </div>
-                        <div className="text-3xl font-bold mb-1">267</div>
-                        <div className="text-sm text-slate-400">Total Users</div>
                     </div>
 
+                    {/* Revenue Trends */}
                     <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <Building2 className="w-8 h-8 text-purple-500" />
-                            <span className="text-green-500 text-sm font-medium">+18%</span>
+                        <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+                            <DollarSign className="w-5 h-5 text-emerald-500" />
+                            Revenue Growth
+                        </h3>
+                        <div className="h-80">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={revenueData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                                    <XAxis dataKey="name" stroke="#94a3b8" />
+                                    <YAxis stroke="#94a3b8" />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#fff' }}
+                                    />
+                                    <Bar dataKey="revenue" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
                         </div>
-                        <div className="text-3xl font-bold mb-1">72</div>
-                        <div className="text-sm text-slate-400">Companies</div>
-                    </div>
-
-                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <Briefcase className="w-8 h-8 text-emerald-500" />
-                            <span className="text-green-500 text-sm font-medium">+31%</span>
-                        </div>
-                        <div className="text-3xl font-bold mb-1">91</div>
-                        <div className="text-sm text-slate-400">Jobs Posted</div>
-                    </div>
-
-                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <DollarSign className="w-8 h-8 text-yellow-500" />
-                            <span className="text-green-500 text-sm font-medium">+42%</span>
-                        </div>
-                        <div className="text-3xl font-bold mb-1">₹5.2L</div>
-                        <div className="text-sm text-slate-400">Revenue (MTD)</div>
-                    </div>
-                </div>
-
-                {/* Charts */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                    {/* User Growth Chart */}
-                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-                        <h2 className="text-xl font-bold mb-6">User Growth</h2>
-                        <ResponsiveContainer width="100%" height={300}>
-                            <LineChart data={userGrowthData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                                <XAxis dataKey="month" stroke="#94a3b8" />
-                                <YAxis stroke="#94a3b8" />
-                                <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }} />
-                                <Legend />
-                                <Line type="monotone" dataKey="users" stroke="#3b82f6" strokeWidth={2} />
-                                <Line type="monotone" dataKey="companies" stroke="#a855f7" strokeWidth={2} />
-                                <Line type="monotone" dataKey="tas" stroke="#10b981" strokeWidth={2} />
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </div>
-
-                    {/* Job Stats Chart */}
-                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-                        <h2 className="text-xl font-bold mb-6">Job Statistics</h2>
-                        <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={jobStatsData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                                <XAxis dataKey="month" stroke="#94a3b8" />
-                                <YAxis stroke="#94a3b8" />
-                                <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }} />
-                                <Legend />
-                                <Bar dataKey="posted" fill="#3b82f6" />
-                                <Bar dataKey="filled" fill="#10b981" />
-                            </BarChart>
-                        </ResponsiveContainer>
                     </div>
                 </div>
 
-                {/* Additional Metrics */}
-                <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-                    <h2 className="text-xl font-bold mb-6">Platform Metrics</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="border-l-4 border-blue-500 pl-4">
-                            <div className="text-2xl font-bold mb-1">64%</div>
-                            <div className="text-sm text-slate-400">Verification Rate</div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* User Distribution */}
+                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+                        <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+                            <Users className="w-5 h-5 text-emerald-500" />
+                            User Distribution
+                        </h3>
+                        <div className="h-64">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={userDistributionData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={60}
+                                        outerRadius={80}
+                                        paddingAngle={5}
+                                        dataKey="value"
+                                    >
+                                        {userDistributionData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#fff' }}
+                                    />
+                                    <Legend />
+                                </PieChart>
+                            </ResponsiveContainer>
                         </div>
-                        <div className="border-l-4 border-emerald-500 pl-4">
-                            <div className="text-2xl font-bold mb-1">3.2 days</div>
-                            <div className="text-sm text-slate-400">Avg. Time to Fill</div>
-                        </div>
-                        <div className="border-l-4 border-purple-500 pl-4">
-                            <div className="text-2xl font-bold mb-1">87%</div>
-                            <div className="text-sm text-slate-400">Success Rate</div>
+                    </div>
+
+                    {/* Job Stats */}
+                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 lg:col-span-2">
+                        <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+                            <Briefcase className="w-5 h-5 text-emerald-500" />
+                            Job Statistics
+                        </h3>
+                        <div className="grid grid-cols-3 gap-4">
+                            <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                                <div className="text-sm text-slate-400 mb-1">Open Jobs</div>
+                                <div className="text-3xl font-bold text-emerald-400">{data?.jobStats.open}</div>
+                            </div>
+                            <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                                <div className="text-sm text-slate-400 mb-1">Filled Jobs</div>
+                                <div className="text-3xl font-bold text-blue-400">{data?.jobStats.filled}</div>
+                            </div>
+                            <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                                <div className="text-sm text-slate-400 mb-1">Closed Jobs</div>
+                                <div className="text-3xl font-bold text-slate-400">{data?.jobStats.closed}</div>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -9,7 +9,7 @@ import { Wallet, CheckCircle, ArrowRight, TrendingUp, Users, DollarSign } from '
 const Navbar = () => (
     <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 backdrop-blur-md bg-slate-950/50 border-b border-white/10">
         <Link href="/" className="flex items-center gap-2">
-            <Image src="/Gemini_Generated_Image_8u0c458u0c458u0c.png" alt="Recruitkart Logo" width={40} height={40} className="rounded-full" />
+            <Image src="/logo.png" alt="Recruitkart Logo" width={40} height={40} className="rounded-full" />
             <span className="text-xl font-bold text-white tracking-tight">Recruitkart</span>
         </Link>
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">

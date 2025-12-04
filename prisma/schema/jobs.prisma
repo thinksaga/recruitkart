@@ -8,6 +8,18 @@ model Job {
   status             JobStatus @default(DRAFT)
   infra_fee_paid     Boolean   @default(false)
   success_fee_amount Float
+  
+  // New ATS Fields
+  location       String?
+  job_type       JobType   @default(FULL_TIME)
+  work_mode      WorkMode  @default(ONSITE)
+  currency       String    @default("INR")
+  experience_min Int?
+  experience_max Int?
+  skills         String[]
+  benefits       String[]
+  department     String?
+
   created_at         DateTime  @default(now())
   updated_at         DateTime  @updatedAt
 
@@ -16,6 +28,7 @@ model Job {
   escrow_ledger EscrowLedger?
   submissions   Submission[]
   tickets       Ticket[]
+  escrow_transactions EscrowTransaction[]
 }
 
 model EscrowLedger {

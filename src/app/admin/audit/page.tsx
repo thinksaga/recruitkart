@@ -1,17 +1,31 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Shield, User, Activity } from 'lucide-react';
+import { ArrowLeft, Shield, Clock, User, Activity, Loader2 } from 'lucide-react';
 
 export default function AdminAuditPage() {
     const router = useRouter();
+    const [logs, setLogs] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Mock audit logs
-    const auditLogs = [
-        { id: 1, action: 'User Verified', user: 'support@recruitkart.com', target: 'admin@test.com', timestamp: new Date().toISOString() },
-        { id: 2, action: 'Job Approved', user: 'admin@recruitkart.com', target: 'Senior Developer', timestamp: new Date(Date.now() - 3600000).toISOString() },
-        { id: 3, action: 'User Rejected', user: 'support@recruitkart.com', target: 'spam@example.com', timestamp: new Date(Date.now() - 7200000).toISOString() },
-    ];
+    useEffect(() => {
+        fetchLogs();
+    }, []);
+
+    const fetchLogs = async () => {
+        try {
+            const res = await fetch('/api/admin/audit');
+            if (res.ok) {
+                const data = await res.json();
+                setLogs(data.logs);
+            }
+        } catch (error) {
+            console.error('Error fetching audit logs:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-slate-950 text-white p-8">
@@ -25,45 +39,70 @@ export default function AdminAuditPage() {
                         Back to Dashboard
                     </button>
                     <h1 className="text-4xl font-bold mb-2">Audit Logs</h1>
-                    <p className="text-slate-400">System activity and admin actions</p>
+                    <p className="text-slate-400">Track system activities and security events</p>
                 </div>
 
-                <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-slate-800">
-                                <tr>
-                                    <th className="text-left py-4 px-6 text-slate-300 font-medium">Action</th>
-                                    <th className="text-left py-4 px-6 text-slate-300 font-medium">Performed By</th>
-                                    <th className="text-left py-4 px-6 text-slate-300 font-medium">Target</th>
-                                    <th className="text-left py-4 px-6 text-slate-300 font-medium">Timestamp</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {auditLogs.map((log) => (
-                                    <tr key={log.id} className="border-b border-slate-800/50 hover:bg-slate-800/50">
-                                        <td className="py-4 px-6">
-                                            <div className="flex items-center gap-2">
-                                                <Activity className="w-4 h-4 text-emerald-500" />
-                                                <span className="font-medium">{log.action}</span>
-                                            </div>
-                                        </td>
-                                        <td className="py-4 px-6">
-                                            <div className="flex items-center gap-2">
-                                                <User className="w-4 h-4 text-slate-400" />
-                                                {log.user}
-                                            </div>
-                                        </td>
-                                        <td className="py-4 px-6 text-slate-400">{log.target}</td>
-                                        <td className="py-4 px-6 text-slate-400 text-sm">
-                                            {new Date(log.timestamp).toLocaleString()}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                {isLoading ? (
+                    <div className="flex justify-center py-12">
+                        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
                     </div>
-                </div>
+                ) : (
+                    <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-slate-800">
+                                    <tr>
+                                        <th className="text-left py-4 px-6 text-slate-300 font-medium">Timestamp</th>
+                                        <th className="text-left py-4 px-6 text-slate-300 font-medium">User</th>
+                                        <th className="text-left py-4 px-6 text-slate-300 font-medium">Action</th>
+                                        <th className="text-left py-4 px-6 text-slate-300 font-medium">Entity</th>
+                                        <th className="text-left py-4 px-6 text-slate-300 font-medium">Status</th>
+                                        <th className="text-left py-4 px-6 text-slate-300 font-medium">Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {logs.map((log) => (
+                                        <tr key={log.id} className="border-b border-slate-800/50 hover:bg-slate-800/50">
+                                            <td className="py-4 px-6 text-slate-400 text-sm whitespace-nowrap">
+                                                {new Date(log.created_at).toLocaleString()}
+                                            </td>
+                                            <td className="py-4 px-6">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold">
+                                                        {log.user.email[0].toUpperCase()}
+                                                    </div>
+                                                    <div className="text-sm">
+                                                        <div>{log.user.email}</div>
+                                                        <div className="text-xs text-slate-500">{log.user.role}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="py-4 px-6">
+                                                <span className="px-2 py-1 bg-slate-800 rounded text-xs font-mono text-emerald-400">
+                                                    {log.action}
+                                                </span>
+                                            </td>
+                                            <td className="py-4 px-6 text-sm">
+                                                <span className="text-slate-400">{log.entity_type}:</span> {log.entity_id}
+                                            </td>
+                                            <td className="py-4 px-6 text-sm">
+                                                <span className={`px-2 py-1 rounded text-xs font-medium ${log.status === 'FAILURE' ? 'bg-red-500/10 text-red-500' :
+                                                        'bg-green-500/10 text-green-500'
+                                                    }`}>
+                                                    {log.status || 'SUCCESS'}
+                                                </span>
+                                            </td>
+                                            <td className="py-4 px-6 text-sm text-slate-400 max-w-xs truncate">
+                                                {log.ip_address && <span className="mr-2 text-xs bg-slate-800 px-1 rounded">{log.ip_address}</span>}
+                                                {JSON.stringify(log.details)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

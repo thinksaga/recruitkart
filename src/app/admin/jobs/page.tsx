@@ -2,7 +2,20 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Briefcase, Building2, DollarSign, Calendar } from 'lucide-react';
+import {
+    ArrowLeft,
+    Briefcase,
+    Building2,
+    DollarSign,
+    Calendar,
+    Search,
+    Filter,
+    Eye,
+    X,
+    MapPin,
+    Clock,
+    Loader2
+} from 'lucide-react';
 
 interface Job {
     id: string;
@@ -11,6 +24,14 @@ interface Job {
     salary_min: number;
     salary_max: number;
     status: string;
+    location?: string;
+    job_type?: string;
+    work_mode?: string;
+    experience_min?: number;
+    experience_max?: number;
+    skills?: string[];
+    benefits?: string[];
+    department?: string;
     created_at: string;
     organization: {
         name: string;
@@ -21,14 +42,49 @@ export default function AdminJobsPage() {
     const router = useRouter();
     const [jobs, setJobs] = useState<Job[]>([]);
     const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('ALL');
+
+    // Modal State
+    const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalJobs, setTotalJobs] = useState(0);
+    const [sortBy, setSortBy] = useState('created_at');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+    // Debounce Search
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchTerm);
+            setPage(1);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
+    useEffect(() => {
+        setPage(1);
+    }, [statusFilter]);
 
     useEffect(() => {
         fetchJobs();
-    }, []);
+    }, [page, limit, debouncedSearch, statusFilter, sortBy, sortOrder]);
 
     const fetchJobs = async () => {
+        setLoading(true);
         try {
-            const res = await fetch('/api/admin/jobs');
+            const params = new URLSearchParams({
+                page: page.toString(),
+                limit: limit.toString(),
+                search: debouncedSearch,
+                status: statusFilter,
+                sortBy,
+                sortOrder
+            });
+            const res = await fetch(`/api/admin/jobs?${params}`);
             if (!res.ok) {
                 if (res.status === 401 || res.status === 403) {
                     router.push('/login');
@@ -37,6 +93,8 @@ export default function AdminJobsPage() {
             }
             const data = await res.json();
             setJobs(data.jobs || []);
+            setTotalPages(data.pagination.pages);
+            setTotalJobs(data.pagination.total);
         } catch (error) {
             console.error('Error fetching jobs:', error);
         } finally {
@@ -44,13 +102,26 @@ export default function AdminJobsPage() {
         }
     };
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-screen bg-slate-950">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
-            </div>
-        );
-    }
+    const handleSort = (field: string) => {
+        if (sortBy === field) {
+            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortBy(field);
+            setSortOrder('desc');
+        }
+    };
+
+    const handleViewDetails = async (jobId: string) => {
+        try {
+            const res = await fetch(`/api/admin/jobs/${jobId}`);
+            if (!res.ok) throw new Error('Failed to fetch job details');
+            const data = await res.json();
+            setSelectedJob(data.job);
+        } catch (error) {
+            console.error('Error fetching job details:', error);
+            alert('Failed to fetch job details');
+        }
+    };
 
     return (
         <div className="min-h-screen bg-slate-950 text-white p-8">
@@ -68,29 +139,48 @@ export default function AdminJobsPage() {
                     <p className="text-slate-400">View and manage all job postings</p>
                 </div>
 
-                {/* Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                {/* Stats Row */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
-                        <div className="text-2xl font-bold">{jobs.length}</div>
+                        <div className="text-2xl font-bold">{totalJobs}</div>
                         <div className="text-sm text-slate-400">Total Jobs</div>
                     </div>
                     <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
-                        <div className="text-2xl font-bold text-green-500">
-                            {jobs.filter(j => j.status === 'OPEN').length}
-                        </div>
-                        <div className="text-sm text-slate-400">Open</div>
+                        <div className="text-2xl font-bold text-emerald-500">{page}</div>
+                        <div className="text-sm text-slate-400">Current Page</div>
                     </div>
                     <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
-                        <div className="text-2xl font-bold text-blue-500">
-                            {jobs.filter(j => j.status === 'FILLED').length}
-                        </div>
-                        <div className="text-sm text-slate-400">Filled</div>
+                        <div className="text-2xl font-bold text-blue-500">{totalPages}</div>
+                        <div className="text-sm text-slate-400">Total Pages</div>
                     </div>
-                    <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
-                        <div className="text-2xl font-bold text-slate-500">
-                            {jobs.filter(j => j.status === 'CLOSED').length}
+                </div>
+
+                {/* Filters */}
+                <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 mb-6">
+                    <div className="flex flex-col md:flex-row gap-4">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                            <input
+                                type="text"
+                                placeholder="Search by title or company..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            />
                         </div>
-                        <div className="text-sm text-slate-400">Closed</div>
+                        <div className="relative min-w-[200px]">
+                            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none"
+                            >
+                                <option value="ALL">All Status</option>
+                                <option value="OPEN">Open</option>
+                                <option value="FILLED">Filled</option>
+                                <option value="CLOSED">Closed</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -100,24 +190,55 @@ export default function AdminJobsPage() {
                         <table className="w-full">
                             <thead className="bg-slate-800">
                                 <tr>
-                                    <th className="text-left py-4 px-6 text-slate-300 font-medium">Job Title</th>
+                                    <th
+                                        className="text-left py-4 px-6 text-slate-300 font-medium cursor-pointer hover:text-white"
+                                        onClick={() => handleSort('title')}
+                                    >
+                                        Job Title {sortBy === 'title' && (sortOrder === 'asc' ? '↑' : '↓')}
+                                    </th>
                                     <th className="text-left py-4 px-6 text-slate-300 font-medium">Company</th>
-                                    <th className="text-left py-4 px-6 text-slate-300 font-medium">Salary Range</th>
-                                    <th className="text-left py-4 px-6 text-slate-300 font-medium">Status</th>
-                                    <th className="text-left py-4 px-6 text-slate-300 font-medium">Posted</th>
+                                    <th
+                                        className="text-left py-4 px-6 text-slate-300 font-medium cursor-pointer hover:text-white"
+                                        onClick={() => handleSort('salary_min')}
+                                    >
+                                        Salary Range {sortBy === 'salary_min' && (sortOrder === 'asc' ? '↑' : '↓')}
+                                    </th>
+                                    <th
+                                        className="text-left py-4 px-6 text-slate-300 font-medium cursor-pointer hover:text-white"
+                                        onClick={() => handleSort('status')}
+                                    >
+                                        Status {sortBy === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
+                                    </th>
+                                    <th
+                                        className="text-left py-4 px-6 text-slate-300 font-medium cursor-pointer hover:text-white"
+                                        onClick={() => handleSort('created_at')}
+                                    >
+                                        Posted {sortBy === 'created_at' && (sortOrder === 'asc' ? '↑' : '↓')}
+                                    </th>
+                                    <th className="text-left py-4 px-6 text-slate-300 font-medium">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {jobs.length === 0 ? (
+                                {loading ? (
                                     <tr>
-                                        <td colSpan={5} className="py-12 text-center text-slate-400">
+                                        <td colSpan={6} className="py-12 text-center">
+                                            <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mx-auto" />
+                                        </td>
+                                    </tr>
+                                ) : jobs.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={6} className="py-12 text-center text-slate-400">
                                             <Briefcase className="w-12 h-12 mx-auto mb-4 opacity-50" />
                                             <p>No jobs found</p>
                                         </td>
                                     </tr>
                                 ) : (
                                     jobs.map((job) => (
-                                        <tr key={job.id} className="border-b border-slate-800/50 hover:bg-slate-800/50">
+                                        <tr
+                                            key={job.id}
+                                            className="border-b border-slate-800/50 hover:bg-slate-800/50 cursor-pointer transition-colors"
+                                            onClick={() => handleViewDetails(job.id)}
+                                        >
                                             <td className="py-4 px-6">
                                                 <div className="font-medium">{job.title}</div>
                                                 <div className="text-sm text-slate-400 line-clamp-1">
@@ -138,8 +259,8 @@ export default function AdminJobsPage() {
                                             </td>
                                             <td className="py-4 px-6">
                                                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${job.status === 'OPEN' ? 'bg-green-500/10 text-green-500' :
-                                                        job.status === 'FILLED' ? 'bg-blue-500/10 text-blue-500' :
-                                                            'bg-slate-500/10 text-slate-500'
+                                                    job.status === 'FILLED' ? 'bg-blue-500/10 text-blue-500' :
+                                                        'bg-slate-500/10 text-slate-500'
                                                     }`}>
                                                     {job.status}
                                                 </span>
@@ -150,14 +271,145 @@ export default function AdminJobsPage() {
                                                     {new Date(job.created_at).toLocaleDateString()}
                                                 </div>
                                             </td>
+                                            <td className="py-4 px-6" onClick={(e) => e.stopPropagation()}>
+                                                <button
+                                                    onClick={() => handleViewDetails(job.id)}
+                                                    className="p-1 text-slate-400 hover:text-emerald-500 transition-colors"
+                                                    title="View Details"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                </button>
+                                            </td>
                                         </tr>
                                     ))
                                 )}
                             </tbody>
                         </table>
                     </div>
+
+                    {/* Pagination Controls */}
+                    <div className="p-4 border-t border-slate-800 flex items-center justify-between">
+                        <div className="text-sm text-slate-400">
+                            Showing {((page - 1) * limit) + 1} to {Math.min(page * limit, totalJobs)} of {totalJobs} jobs
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setPage(p => Math.max(1, p - 1))}
+                                disabled={page === 1}
+                                className="px-3 py-1 bg-slate-800 border border-slate-700 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 transition-colors"
+                            >
+                                Previous
+                            </button>
+                            <button
+                                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                disabled={page === totalPages}
+                                className="px-3 py-1 bg-slate-800 border border-slate-700 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 transition-colors"
+                            >
+                                Next
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
+
+            {/* Job Details Modal */}
+            {selectedJob && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-slate-900 border border-slate-800 rounded-xl w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+                        <div className="p-6 border-b border-slate-800 flex items-center justify-between sticky top-0 bg-slate-900 z-10">
+                            <h3 className="text-xl font-bold text-white">Job Details</h3>
+                            <button onClick={() => setSelectedJob(null)} className="text-slate-400 hover:text-white">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-6">
+                            <div>
+                                <h2 className="text-2xl font-bold text-white mb-2">{selectedJob.title}</h2>
+                                <div className="flex flex-wrap gap-4 text-sm text-slate-400">
+                                    <div className="flex items-center gap-1">
+                                        <Building2 className="w-4 h-4" />
+                                        {selectedJob.organization.name}
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <MapPin className="w-4 h-4" />
+                                        {selectedJob.location || 'Remote'}
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <Clock className="w-4 h-4" />
+                                        {selectedJob.job_type || 'Full-time'}
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <DollarSign className="w-4 h-4" />
+                                        ₹{selectedJob.salary_min.toLocaleString()} - ₹{selectedJob.salary_max.toLocaleString()}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="p-4 bg-slate-800/50 rounded-lg">
+                                    <div className="text-sm text-slate-400 mb-1">Status</div>
+                                    <span className={`px-2 py-1 rounded text-xs font-medium ${selectedJob.status === 'OPEN' ? 'bg-green-500/10 text-green-500' :
+                                        selectedJob.status === 'FILLED' ? 'bg-blue-500/10 text-blue-500' :
+                                            'bg-slate-500/10 text-slate-500'
+                                        }`}>
+                                        {selectedJob.status}
+                                    </span>
+                                </div>
+                                <div className="p-4 bg-slate-800/50 rounded-lg">
+                                    <div className="text-sm text-slate-400 mb-1">Posted On</div>
+                                    <div className="font-medium">{new Date(selectedJob.created_at).toLocaleDateString()}</div>
+                                </div>
+                                <div className="p-4 bg-slate-800/50 rounded-lg">
+                                    <div className="text-sm text-slate-400 mb-1">Experience</div>
+                                    <div className="font-medium">
+                                        {selectedJob.experience_min !== undefined && selectedJob.experience_max !== undefined
+                                            ? `${selectedJob.experience_min} - ${selectedJob.experience_max} Years`
+                                            : 'Not specified'}
+                                    </div>
+                                </div>
+                                <div className="p-4 bg-slate-800/50 rounded-lg">
+                                    <div className="text-sm text-slate-400 mb-1">Work Mode</div>
+                                    <div className="font-medium">{selectedJob.work_mode || 'Not specified'}</div>
+                                </div>
+                            </div>
+
+                            {selectedJob.skills && selectedJob.skills.length > 0 && (
+                                <div>
+                                    <h4 className="font-medium text-white mb-2">Skills</h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        {selectedJob.skills.map((skill, index) => (
+                                            <span key={index} className="px-2 py-1 bg-slate-800 rounded text-sm text-slate-300">
+                                                {skill}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {selectedJob.benefits && selectedJob.benefits.length > 0 && (
+                                <div>
+                                    <h4 className="font-medium text-white mb-2">Benefits</h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        {selectedJob.benefits.map((benefit, index) => (
+                                            <span key={index} className="px-2 py-1 bg-emerald-500/10 text-emerald-500 rounded text-sm">
+                                                {benefit}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div>
+                                <h4 className="font-medium text-white mb-2">Description</h4>
+                                <div className="text-slate-300 whitespace-pre-wrap bg-slate-800/30 p-4 rounded-lg">
+                                    {selectedJob.description}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

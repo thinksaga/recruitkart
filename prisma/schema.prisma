@@ -1,0 +1,531 @@
+model AuditLog {
+  id          String   @id @default(uuid())
+  user_id     String
+  action      String
+  entity_type String
+  entity_id   String?
+  details     Json?
+  ip_address  String?
+  user_agent  String?
+  resource_url String?
+  old_values  Json?
+  new_values  Json?
+  status      String?
+  metadata    Json?
+  created_at  DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [user_id], references: [id])
+}
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["prismaSchemaFolder"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+model Candidate {
+  id            String  @id @default(uuid())
+  user_id       String? @unique
+  user          User?   @relation(fields: [user_id], references: [id])
+  phone         String  @unique
+  email         String  @unique
+  full_name     String
+  identity_hash String? // For fuzzy deduplication
+
+  // Profile Details
+  bio                 String? // Bio / Objective
+  dob                 DateTime?
+  gender              String?
+  nationality         String?
+  address             String?
+  city                String?
+  state               String?
+  country             String?
+  zip_code            String?
+  
+  years_of_experience Float?  @default(0)
+  current_ctc         Float?
+  expected_ctc        Float?
+  notice_period       String?
+  
+  resume_url          String? // Link to original file
+  
+  // Structured Data (Replacing generic JSON)
+  personal_details  Json? // Keep for backward compatibility or extra fields
+  social_links      Json? // { linkedin, github, portfolio... }
+
+  // Preferences
+  preferred_locations String[]
+  willing_to_relocate Boolean @default(false)
+  languages_known     String[]
+
+  // Search Optimization
+  skills_primary   String[] // Top 5 skills for indexing
+  skills_secondary String[] // All other tags
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relations
+  submissions    Submission[]
+  experience     CandidateExperience[]
+  education      CandidateEducation[]
+  projects       CandidateProject[]
+  certifications CandidateCertification[]
+  languages      CandidateLanguage[]
+
+  // Index for fast skill search
+  @@index([skills_primary])
+}
+
+model CandidateExperience {
+  id           String    @id @default(uuid())
+  candidate_id String
+  company      String
+  role         String
+  location     String?
+  start_date   DateTime
+  end_date     DateTime? // Null means "Present"
+  is_current   Boolean   @default(false)
+  description  String?   @db.Text
+  skills_used  String[]
+
+  candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
+
+  @@index([candidate_id])
+}
+
+model CandidateEducation {
+  id             String    @id @default(uuid())
+  candidate_id   String
+  institution    String
+  degree         String
+  field_of_study String?
+  start_date     DateTime
+  end_date       DateTime?
+  grade          String? // CGPA / Percentage
+  activities     String?   @db.Text
+
+  candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
+
+  @@index([candidate_id])
+}
+
+model CandidateProject {
+  id           String   @id @default(uuid())
+  candidate_id String
+  title        String
+  description  String?  @db.Text
+  url          String?
+  start_date   DateTime?
+  end_date     DateTime?
+  skills_used  String[]
+
+  candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
+
+  @@index([candidate_id])
+}
+
+model CandidateCertification {
+  id           String    @id @default(uuid())
+  candidate_id String
+  name         String
+  issuer       String
+  issue_date   DateTime
+  expiry_date  DateTime?
+  credential_id String?
+  url          String?
+
+  candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
+
+  @@index([candidate_id])
+}
+
+model CandidateLanguage {
+  id           String @id @default(uuid())
+  candidate_id String
+  language     String
+  proficiency  String // e.g., "Native", "Professional", "Elementary"
+
+  candidate Candidate @relation(fields: [candidate_id], references: [id], onDelete: Cascade)
+
+  @@index([candidate_id])
+}
+enum UserRole {
+  ADMIN
+  SUPPORT
+  OPERATOR
+  TAS
+  CANDIDATE
+  FINANCIAL_CONTROLLER
+  COMPLIANCE_OFFICER
+  // Company Roles
+  COMPANY_ADMIN
+  COMPANY_MEMBER
+  INTERVIEWER
+  DECISION_MAKER
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum JobStatus {
+  DRAFT
+  OPEN
+  PRIVATE
+  CLOSED
+  FILLED
+}
+
+enum SubmissionStatus {
+  PENDING_CONSENT
+  LOCKED
+  ACTIVE
+  REJECTED_BY_CANDIDATE
+  EXPIRED
+  INTERVIEWING
+  HIRED
+}
+
+enum EscrowStatus {
+  HELD
+  RELEASED_TO_TAS
+  REFUNDED_TO_COMPANY
+  DISPUTED
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum InterviewOutcome {
+  PASSED
+  REJECTED
+  NEXT_ROUND_NEEDED
+  PENDING_DECISION
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  VOID
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+enum OrganizationStatus {
+  ACTIVE
+  BLOCKED
+  PENDING_VERIFICATION
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  FREELANCE
+  INTERNSHIP
+}
+
+enum WorkMode {
+  REMOTE
+  ONSITE
+  HYBRID
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TicketCategory {
+  TECHNICAL
+  BILLING
+  ACCOUNT
+  OTHER
+}
+model Job {
+  id                 String    @id @default(uuid())
+  organization_id    String
+  title              String
+  description        String?
+  salary_min         Float?
+  salary_max         Float?
+  status             JobStatus @default(DRAFT)
+  infra_fee_paid     Boolean   @default(false)
+  success_fee_amount Float
+  
+  // New ATS Fields
+  location       String?
+  job_type       JobType   @default(FULL_TIME)
+  work_mode      WorkMode  @default(ONSITE)
+  currency       String    @default("INR")
+  experience_min Int?
+  experience_max Int?
+  skills         String[]
+  benefits       String[]
+  department     String?
+
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+
+  // Relations
+  organization  Organization  @relation(fields: [organization_id], references: [id])
+  escrow_ledger EscrowLedger?
+  submissions   Submission[]
+  tickets       Ticket[]
+  escrow_transactions EscrowTransaction[]
+}
+
+model EscrowLedger {
+  id           String       @id @default(uuid())
+  job_id       String       @unique
+  amount       Float
+  status       EscrowStatus @default(HELD)
+  deposited_at DateTime     @default(now())
+  release_date DateTime?
+  created_at   DateTime     @default(now())
+  updated_at   DateTime     @updatedAt
+
+  // Relations
+  job Job @relation(fields: [job_id], references: [id])
+}
+model CreditTransaction {
+  id          String   @id @default(uuid())
+  tas_id      String
+  type        String   // "CREDIT" or "DEBIT"
+  amount      Int
+  description String
+  status      String   @default("COMPLETED") // "COMPLETED", "PENDING", "FAILED"
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  // Relations
+  tas TASProfile @relation(fields: [tas_id], references: [id])
+}
+
+model Invoice {
+  id              String        @id @default(uuid())
+  organization_id String
+  amount          Int
+  due_date        DateTime
+  status          InvoiceStatus @default(DRAFT)
+  items           Json? // JSON for invoice items
+  pdf_url         String?
+  created_at      DateTime      @default(now())
+  updated_at      DateTime      @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [organization_id], references: [id])
+}
+
+model Payout {
+  id           String       @id @default(uuid())
+  tas_id       String
+  amount       Int
+  status       PayoutStatus @default(PENDING)
+  processed_at DateTime?
+  notes        String?
+  created_at   DateTime     @default(now())
+  updated_at   DateTime     @updatedAt
+
+  // Relations
+  tas TASProfile @relation(fields: [tas_id], references: [id])
+}
+
+model EscrowTransaction {
+  id          String       @id @default(uuid())
+  job_id      String
+  amount      Int
+  status      EscrowStatus @default(HELD)
+  description String?
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
+
+  // Relations
+  job Job @relation(fields: [job_id], references: [id])
+}
+model Submission {
+  id           String           @id @default(uuid())
+  job_id       String
+  tas_id       String
+  candidate_id String
+  status       SubmissionStatus @default(PENDING_CONSENT)
+  locked_until DateTime?
+  created_at   DateTime         @default(now())
+  updated_at   DateTime         @updatedAt
+
+  // Relations
+  job        Job         @relation(fields: [job_id], references: [id])
+  tas        TASProfile  @relation(fields: [tas_id], references: [id])
+  candidate  Candidate   @relation(fields: [candidate_id], references: [id])
+  interviews Interview[]
+
+  // Constraint: A candidate can be submitted to a job only once
+  @@unique([job_id, candidate_id])
+}
+
+model Interview {
+  id              String           @id @default(uuid())
+  submission_id   String
+  round_number    Int              @default(1)
+  round_type      String // e.g., "Technical", "HR", "Coding"
+  status          InterviewStatus  @default(SCHEDULED)
+  outcome         InterviewOutcome @default(PENDING_DECISION)
+  feedback_json   Json? // JSONB for scorecard
+  zoom_meeting_id String?
+  recording_url   String?
+  scheduled_at    DateTime?
+  created_at      DateTime         @default(now())
+  updated_at      DateTime         @updatedAt
+
+  // Relations
+  submission Submission @relation(fields: [submission_id], references: [id])
+}
+model Ticket {
+  id              String       @id @default(uuid())
+  raised_by_id    String
+  related_job_id  String?
+  reason          String
+  status          TicketStatus @default(OPEN)
+  resolution_note String?
+  
+  // New Fields
+  subject         String       @default("Support Request")
+  priority        TicketPriority @default(MEDIUM)
+  category        TicketCategory @default(OTHER)
+  attachments     String[]
+  assigned_to_id  String?
+
+  created_at      DateTime     @default(now())
+  updated_at      DateTime     @updatedAt
+
+  // Relations
+  raised_by   User @relation(fields: [raised_by_id], references: [id])
+  related_job Job? @relation(fields: [related_job_id], references: [id])
+  assigned_to User? @relation("TicketAssignee", fields: [assigned_to_id], references: [id])
+}
+
+model User {
+  id                  String             @id @default(uuid())
+  email               String             @unique
+  password_hash       String
+  role                UserRole
+  verification_status VerificationStatus @default(PENDING)
+  organization_id     String?
+  
+  // Verification Flags
+  is_phone_verified   Boolean            @default(false)
+  is_email_verified   Boolean            @default(false)
+  
+  // Profile & Preferences
+  full_name           String?
+  designation         String?
+  phone               String?            @unique
+  avatar_url          String?
+  last_login_at       DateTime?
+  is_active           Boolean            @default(true)
+  preferences         Json?              // UI settings, notification preferences
+
+  reset_token         String?
+  reset_token_expiry  DateTime?
+  created_at          DateTime           @default(now())
+  updated_at          DateTime           @updatedAt
+
+  // Relations
+  organization Organization? @relation(fields: [organization_id], references: [id])
+  tas_profile  TASProfile?
+  candidate    Candidate?
+  tickets      Ticket[]
+  assigned_tickets Ticket[] @relation("TicketAssignee")
+  audit_logs   AuditLog[]
+}
+
+model Organization {
+  id         String   @id @default(uuid())
+  name       String
+  gstin      String?
+  status     OrganizationStatus @default(ACTIVE)
+  domain     String?
+  website    String?
+  logo_url   String?
+  gst_certificate_url String?
+  
+  // Expanded Details
+  description    String?   @db.Text
+  industry       String?
+  size           String?   // e.g., "1-10", "11-50"
+  founded_year   Int?
+  address        Json?     // { street, city, state, zip, country }
+  social_links   Json?     // { linkedin, twitter, website }
+  branding_color String?   // Hex code
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relations
+  users       User[]
+  jobs        Job[]
+  invitations Invitation[]
+  invoices    Invoice[]
+}
+
+model Invitation {
+  id              String           @id @default(uuid())
+  email           String
+  role            UserRole
+  organization_id String
+  token           String           @unique
+  status          InvitationStatus @default(PENDING)
+  expires_at      DateTime
+  created_at      DateTime         @default(now())
+  updated_at      DateTime         @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [organization_id], references: [id])
+
+  @@unique([email, organization_id])
+}
+
+model TASProfile {
+  id              String   @id @default(uuid())
+  user_id         String   @unique
+  pan_number      String   @unique
+  pan_file_url    String?
+  linkedin_url    String?
+  credits_balance Int      @default(0)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  // Relations
+  user        User         @relation(fields: [user_id], references: [id])
+  submissions Submission[]
+  transactions CreditTransaction[]
+  payouts     Payout[]
+}
