@@ -15,7 +15,7 @@ console.log('🧹 Cleaning project...');
 
 // 1. Stop Docker & Remove Volumes
 console.log('🐳 Stopping Docker and removing volumes...');
-run('docker-compose down -v');
+run('docker-compose -f docker-compose.yml down -v');
 
 // 2. Remove Next.js build
 const nextDir = path.join(__dirname, '../.next');
