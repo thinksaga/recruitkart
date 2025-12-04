@@ -75,6 +75,7 @@ export const PUBLIC_ROUTES = [
     '/pricing',
     '/for-companies',
     '/for-recruiters',
+    '/about',
     '/verification-pending', // Accessible to logged-in users pending verification
 ];
 
