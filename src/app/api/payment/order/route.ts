@@ -14,7 +14,7 @@ export async function POST(request: Request) {
         }
 
         const payload = await verifyJWT(token);
-        if (!payload || !['COMPANY_ADMIN', 'COMPANY_MEMBER'].includes(payload.role as string)) {
+        if (!payload || !['COMPANY_ADMIN', 'COMPANY_MEMBER', 'TAS'].includes(payload.role as string)) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 

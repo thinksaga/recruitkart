@@ -39,14 +39,15 @@ export async function GET() {
             id: job.id,
             title: job.title,
             company: job.organization.name,
-            location: 'Remote', // Default as schema lacks location
+            location: job.location || 'Remote',
             salary: job.salary_min && job.salary_max
                 ? `₹${(job.salary_min / 100000).toFixed(1)}L - ₹${(job.salary_max / 100000).toFixed(1)}L`
                 : 'Not disclosed',
-            type: 'Full-time', // Default
+            type: job.job_type ? job.job_type.replace('_', ' ') : 'Full Time',
+            work_mode: job.work_mode || 'Onsite',
             posted: new Date(job.created_at).toLocaleDateString(),
             bounty: `₹${job.success_fee_amount.toLocaleString()}`,
-            skills: [], // Schema lacks skills
+            skills: Array.isArray(job.skills) ? job.skills : [],
             logo: job.organization.name.charAt(0)
         }));
 
