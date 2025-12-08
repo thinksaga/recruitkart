@@ -4,11 +4,14 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import PaymentModal from '@/components/dashboard/company/PaymentModal';
 
 export default function NewJobPage() {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+    const [createdJobId, setCreatedJobId] = useState<string | null>(null);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -26,8 +29,22 @@ export default function NewJobPage() {
         description: ''
     });
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSaveDraft = async (e: React.FormEvent) => {
         e.preventDefault();
+        await submitJob(false);
+    };
+
+    const handlePayAndPublish = async (e: React.FormEvent) => {
+        e.preventDefault();
+        // First save as draft, then open payment modal
+        const jobId = await submitJob(true);
+        if (jobId) {
+            setCreatedJobId(jobId);
+            setIsPaymentModalOpen(true);
+        }
+    };
+
+    const submitJob = async (returnId: boolean = false) => {
         setIsSubmitting(true);
         setMessage(null);
 
@@ -41,7 +58,7 @@ export default function NewJobPage() {
                 experience_max: formData.experience_max ? Number(formData.experience_max) : undefined,
                 skills: formData.skills.split(',').map(s => s.trim()).filter(Boolean),
                 benefits: formData.benefits.split(',').map(s => s.trim()).filter(Boolean),
-                job_type: formData.type, // Map type to job_type
+                job_type: formData.type,
             };
 
             const res = await fetch('/api/company/jobs', {
@@ -53,17 +70,40 @@ export default function NewJobPage() {
             const data = await res.json();
 
             if (res.ok) {
-                setMessage({ type: 'success', text: 'Job posted successfully!' });
-                setTimeout(() => {
-                    router.push('/dashboard/company/jobs');
-                }, 1500);
+                if (returnId) {
+                    return data.job.id;
+                } else {
+                    setMessage({ type: 'success', text: 'Job saved as draft!' });
+                    setTimeout(() => {
+                        router.push('/dashboard/company/jobs');
+                    }, 1500);
+                }
             } else {
-                setMessage({ type: 'error', text: data.error || 'Failed to post job' });
+                setMessage({ type: 'error', text: data.error || 'Failed to save job' });
             }
         } catch (error) {
             setMessage({ type: 'error', text: 'An error occurred' });
         } finally {
             setIsSubmitting(false);
+        }
+        return null;
+    };
+
+    const handlePaymentSuccess = async () => {
+        try {
+            const res = await fetch(`/api/company/jobs/${createdJobId}/pay`, {
+                method: 'POST',
+            });
+
+            if (res.ok) {
+                setIsPaymentModalOpen(false);
+                router.push('/dashboard/company/jobs');
+            } else {
+                setMessage({ type: 'error', text: 'Payment confirmation failed' });
+            }
+        } catch (error) {
+            console.error(error);
+            setMessage({ type: 'error', text: 'Payment confirmation failed' });
         }
     };
 
@@ -94,7 +134,7 @@ export default function NewJobPage() {
                 </motion.div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-8">
+            <form className="space-y-8">
                 {/* Basic Info */}
                 <div className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800/50">
                     <h2 className="text-lg font-semibold text-white mb-4">Basic Information</h2>
@@ -280,23 +320,38 @@ export default function NewJobPage() {
                     />
                 </div>
 
-                <div className="flex justify-end pt-4">
+                <div className="flex justify-end pt-4 gap-4">
                     <button
-                        type="submit"
+                        onClick={handleSaveDraft}
+                        disabled={isSubmitting}
+                        className="px-6 py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-medium transition-colors disabled:opacity-50"
+                    >
+                        Save as Draft
+                    </button>
+                    <button
+                        onClick={handlePayAndPublish}
                         disabled={isSubmitting}
                         className="px-8 py-4 bg-rose-500 hover:bg-rose-600 text-white rounded-xl font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                     >
                         {isSubmitting ? (
                             <>
                                 <Loader2 className="w-5 h-5 animate-spin" />
-                                Posting Job...
+                                Processing...
                             </>
                         ) : (
-                            'Post Job'
+                            'Pay & Publish'
                         )}
                     </button>
                 </div>
             </form>
+
+            <PaymentModal
+                isOpen={isPaymentModalOpen}
+                onClose={() => setIsPaymentModalOpen(false)}
+                onSuccess={handlePaymentSuccess}
+                amount={999}
+                title={`Posting Fee: ${formData.title}`}
+            />
         </div>
     );
 }

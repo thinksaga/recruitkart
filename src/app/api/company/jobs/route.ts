@@ -21,7 +21,47 @@ const createJobSchema = z.object({
     department: z.string().optional(),
 });
 
-// ... (GET handler remains mostly same, just update location mapping)
+// GET: Fetch Company Jobs
+export async function GET(request: Request) {
+    try {
+        const cookieStore = await cookies();
+        const token = cookieStore.get('token')?.value;
+
+        if (!token) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const payload = await verifyJWT(token);
+        if (!payload || !['COMPANY_ADMIN', 'COMPANY_MEMBER'].includes(payload.role as string)) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
+        const user = await prisma.user.findUnique({
+            where: { id: payload.userId as string },
+            select: { organization_id: true }
+        });
+
+        if (!user?.organization_id) {
+            return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+        }
+
+        const jobs = await prisma.job.findMany({
+            where: { organization_id: user.organization_id },
+            orderBy: { created_at: 'desc' },
+            include: {
+                _count: {
+                    select: { submissions: true }
+                }
+            }
+        });
+
+        return NextResponse.json(jobs);
+
+    } catch (error) {
+        console.error('Get Jobs Error:', error);
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    }
+}
 
 export async function POST(request: Request) {
     try {
@@ -58,8 +98,8 @@ export async function POST(request: Request) {
                 salary_min: validatedData.salary_min,
                 salary_max: validatedData.salary_max,
                 success_fee_amount: validatedData.success_fee_amount,
-                status: 'OPEN', // Default to OPEN for now
-                infra_fee_paid: true, // Simulating payment
+                status: 'DRAFT',
+                infra_fee_paid: false,
                 location: validatedData.location,
                 job_type: validatedData.job_type as any, // Cast to any to avoid enum issues if types aren't perfectly synced yet
                 work_mode: validatedData.work_mode as any,

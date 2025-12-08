@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { User, FileText, Calendar, Eye, Loader2, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { StatsCard } from '@/components/dashboard/StatsCard';
 
 export default function CandidateDashboard() {
     const [stats, setStats] = useState({
@@ -40,10 +41,10 @@ export default function CandidateDashboard() {
     }, []);
 
     const statCards = [
-        { name: 'Profile Completion', value: `${stats.profileCompletion}%`, icon: User, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
-        { name: 'Active Applications', value: stats.activeApplications.toString(), icon: FileText, color: 'text-teal-500', bg: 'bg-teal-500/10' },
-        { name: 'Upcoming Interviews', value: stats.interviews.toString(), icon: Calendar, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-        { name: 'Profile Views', value: stats.profileViews.toString(), icon: Eye, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+        { label: 'Profile Completion', value: `${stats.profileCompletion}%`, icon: User, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
+        { label: 'Active Applications', value: stats.activeApplications.toString(), icon: FileText, color: 'text-teal-500', bg: 'bg-teal-500/10' },
+        { label: 'Upcoming Interviews', value: stats.interviews.toString(), icon: Calendar, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+        { label: 'Profile Views', value: stats.profileViews.toString(), icon: Eye, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
     ];
 
     return (
@@ -63,21 +64,11 @@ export default function CandidateDashboard() {
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {statCards.map((stat, index) => (
-                    <motion.div
-                        key={stat.name}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800/50 backdrop-blur-sm"
-                    >
-                        <div className="flex items-center justify-between mb-4">
-                            <div className={`p-3 rounded-lg ${stat.bg}`}>
-                                <stat.icon className={`w-6 h-6 ${stat.color}`} />
-                            </div>
-                            <span className="text-2xl font-bold text-white">{stat.value}</span>
-                        </div>
-                        <h3 className="text-sm font-medium text-slate-400">{stat.name}</h3>
-                    </motion.div>
+                    <StatsCard
+                        key={stat.label}
+                        {...stat}
+                        delay={index * 0.1}
+                    />
                 ))}
             </div>
 

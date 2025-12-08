@@ -17,7 +17,9 @@ export default function CompanyJobsPage() {
                 const res = await fetch('/api/company/jobs');
                 if (res.ok) {
                     const data = await res.json();
-                    setJobs(data.jobs);
+                    // Handle both array response and { jobs: [] } response
+                    const jobsList = Array.isArray(data) ? data : (data.jobs || []);
+                    setJobs(jobsList);
                 }
             } catch (error) {
                 console.error('Failed to fetch jobs:', error);

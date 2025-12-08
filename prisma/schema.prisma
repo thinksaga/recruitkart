@@ -291,6 +291,12 @@ model Job {
   skills         String[]
   benefits       String[]
   department     String?
+  
+  // Structured Job Description
+  responsibilities String[]
+  qualifications   String[]
+  nice_to_have     String[]
+  about_company    String?
 
   created_at         DateTime  @default(now())
   updated_at         DateTime  @updatedAt
@@ -485,6 +491,7 @@ model Organization {
   address        Json?     // { street, city, state, zip, country }
   social_links   Json?     // { linkedin, twitter, website }
   branding_color String?   // Hex code
+  documents      Json?     // [{ name, url, type, uploaded_at }]
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt

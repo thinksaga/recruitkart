@@ -1,21 +1,24 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import {
     LayoutDashboard,
     Briefcase,
     Users,
+    User, // Added
     UserPlus,
     CreditCard,
     LogOut,
     Menu,
     X,
-    Building2
+    Building2, // Added
+    Settings,
+    ChevronDown
 } from 'lucide-react';
-import { useState } from 'react';
+import ChangePasswordModal from '@/components/dashboard/company/ChangePasswordModal'; // Added
 
 interface CompanyLayoutProps {
     children: ReactNode;
@@ -25,12 +28,15 @@ export default function CompanyLayout({ children }: CompanyLayoutProps) {
     const pathname = usePathname();
     const router = useRouter();
     const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [isProfileOpen, setIsProfileOpen] = useState(false); // Added
+    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false); // Added
 
     const navigation = [
         { name: 'Dashboard', href: '/dashboard/company', icon: LayoutDashboard },
         { name: 'Job Postings', href: '/dashboard/company/jobs', icon: Briefcase },
         { name: 'Candidates', href: '/dashboard/company/candidates', icon: Users },
         { name: 'Team', href: '/dashboard/company/team', icon: UserPlus },
+        { name: 'Company Details', href: '/dashboard/company/profile', icon: Building2 },
         { name: 'Billing', href: '/dashboard/company/billing', icon: CreditCard },
     ];
 
@@ -120,7 +126,7 @@ export default function CompanyLayout({ children }: CompanyLayoutProps) {
             {/* Main Content */}
             <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Top Bar */}
-                <header className="relative z-10 h-16 bg-slate-900/30 backdrop-blur-xl border-b border-slate-800/50 flex items-center justify-between px-6">
+                <header className="relative z-40 h-16 bg-slate-900/30 backdrop-blur-xl border-b border-slate-800/50 flex items-center justify-between px-6">
                     <button
                         onClick={() => setSidebarOpen(!sidebarOpen)}
                         className="p-2 hover:bg-slate-800/50 rounded-lg transition-colors"
@@ -133,12 +139,69 @@ export default function CompanyLayout({ children }: CompanyLayoutProps) {
                     </button>
 
                     <div className="flex items-center gap-4">
-                        <div className="text-right">
-                            <p className="text-sm font-medium text-white">Acme Corp</p>
-                            <p className="text-xs text-slate-400">hr@acme.com</p>
-                        </div>
-                        <div className="w-10 h-10 bg-gradient-to-br from-rose-500 to-pink-500 rounded-full flex items-center justify-center">
-                            <span className="text-white font-bold text-sm">A</span>
+                        <div className="relative">
+                            <button
+                                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                                className="flex items-center gap-3 hover:bg-slate-800/50 p-2 rounded-lg transition-colors focus:outline-none"
+                            >
+                                <div className="text-right hidden sm:block">
+                                    <p className="text-sm font-medium text-white">Acme Corp</p>
+                                    <p className="text-xs text-slate-400">hr@acme.com</p>
+                                </div>
+                                <div className="w-10 h-10 bg-gradient-to-br from-rose-500 to-pink-500 rounded-full flex items-center justify-center">
+                                    <span className="text-white font-bold text-sm">A</span>
+                                </div>
+                                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {/* Profile Dropdown */}
+                            {isProfileOpen && (
+                                <div className="absolute right-0 top-full mt-2 w-56 bg-slate-900 border border-slate-800 rounded-xl shadow-xl overflow-hidden z-50">
+                                    <div className="p-3 border-b border-slate-800">
+                                        <p className="text-sm font-medium text-white">Acme Corp</p>
+                                        <p className="text-xs text-slate-400 truncate">hr@acme.com</p>
+                                    </div>
+                                    <div className="p-1">
+                                        <button
+                                            onClick={() => {
+                                                router.push('/dashboard/company/my-profile');
+                                                setIsProfileOpen(false);
+                                            }}
+                                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                                        >
+                                            <User className="w-4 h-4" />
+                                            My Profile
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                router.push('/dashboard/company/profile');
+                                                setIsProfileOpen(false);
+                                            }}
+                                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                                        >
+                                            <Building2 className="w-4 h-4" />
+                                            Company Details
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setIsPasswordModalOpen(true);
+                                                setIsProfileOpen(false);
+                                            }}
+                                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                                        >
+                                            <Settings className="w-4 h-4" />
+                                            Change Password
+                                        </button>
+                                        <button
+                                            onClick={handleLogout}
+                                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
+                                        >
+                                            <LogOut className="w-4 h-4" />
+                                            Logout
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </header>
@@ -148,6 +211,11 @@ export default function CompanyLayout({ children }: CompanyLayoutProps) {
                     {children}
                 </main>
             </div>
+
+            <ChangePasswordModal
+                isOpen={isPasswordModalOpen}
+                onClose={() => setIsPasswordModalOpen(false)}
+            />
         </div>
     );
 }

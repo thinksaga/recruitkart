@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Users, Send, Coins, TrendingUp, Loader2 } from 'lucide-react';
+import { StatsCard } from '@/components/dashboard/StatsCard';
 
 export default function TASDashboard() {
     const [stats, setStats] = useState<any[]>([]);
@@ -59,21 +60,15 @@ export default function TASDashboard() {
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {stats.map((stat, index) => (
-                    <motion.div
+                    <StatsCard
                         key={stat.name}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800/50 backdrop-blur-sm"
-                    >
-                        <div className="flex items-center justify-between mb-4">
-                            <div className={`p-3 rounded-lg ${stat.bg}`}>
-                                <stat.icon className={`w-6 h-6 ${stat.color}`} />
-                            </div>
-                            <span className="text-2xl font-bold text-white">{stat.value}</span>
-                        </div>
-                        <h3 className="text-sm font-medium text-slate-400">{stat.name}</h3>
-                    </motion.div>
+                        label={stat.name}
+                        value={stat.value}
+                        icon={stat.icon}
+                        color={stat.color}
+                        bg={stat.bg}
+                        delay={index * 0.1}
+                    />
                 ))}
             </div>
 

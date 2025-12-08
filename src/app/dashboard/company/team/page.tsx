@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Search, Filter, MoreVertical, Mail, Shield, User, Loader2, X, CheckCircle, AlertCircle } from 'lucide-react';
+import { Plus, Search, Filter, MoreVertical, Mail, Shield, User, Loader2, X, CheckCircle, AlertCircle, KeyRound } from 'lucide-react';
+import ResetMemberPasswordModal from '@/components/dashboard/company/ResetMemberPasswordModal';
 
 export default function CompanyTeamPage() {
     const [members, setMembers] = useState<any[]>([]);
@@ -17,6 +18,10 @@ export default function CompanyTeamPage() {
         email: '',
         role: 'COMPANY_MEMBER'
     });
+
+    // Reset Password Modal State
+    const [resetModalUserId, setResetModalUserId] = useState<string | null>(null);
+    const [resetModalUserEmail, setResetModalUserEmail] = useState<string>('');
 
     const fetchMembers = async () => {
         try {
@@ -145,8 +150,15 @@ export default function CompanyTeamPage() {
                                 </td>
                                 <td className="p-4 text-slate-400">{member.joined}</td>
                                 <td className="p-4 text-right">
-                                    <button className="text-slate-500 hover:text-white">
-                                        <MoreVertical className="w-4 h-4" />
+                                    <button
+                                        onClick={() => {
+                                            setResetModalUserId(member.id);
+                                            setResetModalUserEmail(member.email);
+                                        }}
+                                        className="text-slate-500 hover:text-white p-2 hover:bg-slate-800 rounded-lg transition-colors group relative"
+                                        title="Reset Password"
+                                    >
+                                        <KeyRound className="w-4 h-4" />
                                     </button>
                                 </td>
                             </tr>
@@ -226,6 +238,14 @@ export default function CompanyTeamPage() {
                     </div>
                 )}
             </AnimatePresence>
+            {resetModalUserId && (
+                <ResetMemberPasswordModal
+                    isOpen={!!resetModalUserId}
+                    onClose={() => setResetModalUserId(null)}
+                    userId={resetModalUserId as string}
+                    userEmail={resetModalUserEmail}
+                />
+            )}
         </div>
     );
 }
