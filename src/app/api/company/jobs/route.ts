@@ -7,18 +7,18 @@ import { z } from 'zod';
 const createJobSchema = z.object({
     title: z.string().min(1, "Title is required"),
     description: z.string().min(10, "Description must be at least 10 characters"),
-    salary_min: z.number().min(0),
-    salary_max: z.number().min(0),
-    success_fee_amount: z.number().min(0),
-    location: z.string().optional(),
-    job_type: z.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT', 'FREELANCE', 'INTERNSHIP']).optional(),
-    work_mode: z.enum(['REMOTE', 'ONSITE', 'HYBRID']).optional(),
+    salary_min: z.number().min(0, "Minimum salary is required"),
+    salary_max: z.number().min(0, "Maximum salary is required"),
+    success_fee_amount: z.number().min(0, "Success fee must be non-negative"),
+    location: z.string().min(1, "Location is required"),
+    job_type: z.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT', 'FREELANCE', 'INTERNSHIP']),
+    work_mode: z.enum(['REMOTE', 'ONSITE', 'HYBRID']),
     currency: z.string().default('INR'),
-    experience_min: z.number().min(0).optional(),
-    experience_max: z.number().min(0).optional(),
-    skills: z.array(z.string()).optional(),
-    benefits: z.array(z.string()).optional(),
-    department: z.string().optional(),
+    experience_min: z.number().min(0, "Minimum experience is required"),
+    experience_max: z.number().min(0, "Maximum experience is required"),
+    skills: z.array(z.string()).min(1, "At least one skill is required"),
+    benefits: z.array(z.string()).min(1, "At least one benefit is required"),
+    department: z.string().min(1, "Department is required"),
 });
 
 // GET: Fetch Company Jobs
@@ -55,7 +55,19 @@ export async function GET(request: Request) {
             }
         });
 
-        return NextResponse.json(jobs);
+        const formattedJobs = jobs.map(job => ({
+            ...job,
+            salary: job.salary_min && job.salary_max
+                ? `₹${(job.salary_min / 100000).toFixed(1)}L - ₹${(job.salary_max / 100000).toFixed(1)}L`
+                : 'Not disclosed',
+            experience: job.experience_min && job.experience_max
+                ? `${job.experience_min}-${job.experience_max} Yrs`
+                : 'Fresher',
+            bounty: `₹${job.success_fee_amount.toLocaleString()}`,
+            candidates: job._count.submissions
+        }));
+
+        return NextResponse.json({ jobs: formattedJobs });
 
     } catch (error) {
         console.error('Get Jobs Error:', error);
@@ -97,7 +109,7 @@ export async function POST(request: Request) {
                 description: validatedData.description,
                 salary_min: validatedData.salary_min,
                 salary_max: validatedData.salary_max,
-                success_fee_amount: validatedData.success_fee_amount,
+                success_fee_amount: validatedData.success_fee_amount || 0,
                 status: 'DRAFT',
                 infra_fee_paid: false,
                 location: validatedData.location,
